@@ -57,7 +57,10 @@ Drupal ID: %username@%uri_brief
       return t('Improves Drupal\'s login system.');
       break;
     case 'admin/settings/logintoboggan':
-      return t('Customize your login and registration system. More help can be found <a href="%url">here</a>.', array('%url' => url('admin/help/logintoboggan')));
+      $output = t('<p>Customize your login and registration system. More help can be found <a href="%url">here</a>.</p>
+      <p>Login Toboggan version: ', array('%url' => url('admin/help/logintoboggan')));
+      $output .= str_replace(array('$Revision', '$Date', '$'), array('', '', ''), '<b>$Revision$</b> $Date$');
+      $output .= '</p>';
   }
 }
 
