@@ -57,10 +57,9 @@ Drupal ID: %username@%uri_brief
       return t('Improves Drupal\'s login system.');
       break;
     case 'admin/settings/logintoboggan':
-      $output = t('<p>Customize your login and registration system. More help can be found <a href="%url">here</a>.</p>
-      <p>Login Toboggan version: ', array('%url' => url('admin/help/logintoboggan')));
-      $output .= str_replace(array('$Revision$Date$'), array('', '', ''), '<b>$Revision$</b> $Date$');
-      $output .= '</p>';
+      $output = t('<p>Customize your login and registration system. More help can be found <a href="%url">here</a>.</p>', array('%url' => url('admin/help/logintoboggan')));
+
+      return $output;
   }
 }
 
@@ -506,9 +505,10 @@ function _logintoboggan_toggleboggan ($edit = array()){
 }
 
 function logintoboggan_settings() {
+  $version .= str_replace(array('$Re'.'vision:', '$Da'.'te:', '$'), array('', '', ''), '<p style="font-size:x-small">Login Toboggan version: <b>$Revision$</b>, $Date$</p>');
   if (function_exists('form_render')) {
     // new form api version
-    $form['login'] = array('#type' => 'fieldset', '#title' => t('Login'), '#tree' => FALSE);
+    $form['login'] = array('#type' => 'fieldset', '#title' => t('Login'), '#tree' => FALSE, '#prefix' => $version);
 
     $form['login']['login_with_mail'] = array('#type' => 'radios', '#title' => t('Allow users to login using their email address'), '#name' => 'login_with_mail', '#default_value' => variable_get('login_with_mail', 0), '#options' => array(t('disabled'), t('enabled')), '#description' => t('Users will be able to enter EITHER their username OR their email address to log in. note: This will disallow users from registering using an email address as their username.'));
 
@@ -537,9 +537,10 @@ function logintoboggan_settings() {
   }
   else {
 
-    // old version
+    // Drupal 4.6
+    $output = $version;
 
-    $output = form_radios(t('Allow users to login using their email address'), 'login_with_mail', variable_get('login_with_mail', 0), array(t('disabled'), t('enabled')), t('note: This will disallow users from registering using an email address as their username.'));
+    $output .= form_radios(t('Allow users to login using their email address'), 'login_with_mail', variable_get('login_with_mail', 0), array(t('disabled'), t('enabled')), t('note: This will disallow users from registering using an email address as their username.'));
 
     $group .= form_radios(t('Use two email fields on registration form'), 'email_reg_confirm', variable_get('email_reg_confirm', 0), array(t('disabled'), t('enabled')), t('User will have to type the same email address into both fields. This helps to confirm that they\'ve typed the correct address.'));
 
