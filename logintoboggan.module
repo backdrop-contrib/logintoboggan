@@ -3,18 +3,33 @@
 
 /**
  * @todo
+ * _ Configurable text for theme_lt_access_denied()
+ * 
  * _ clean up variable names
  * _ unify the password page to just one field
- * _ test with Drupal's distributed authentication...
+ * _ test with Drupal's distributed authentication (drupal.module)
  *
- * @
  */
 
+/**
+ * @wishlist (Chad)
+ * _ integration w/ captcha mod.  may already be possible, but needs investigating
+ * _ password complexity testing option
+ * _ options for minimum/maximum username/password length
+ * _ setting to expire unverified accounts and purge them from system
+ *
+ * @
 
 /**
  * @defgroup logintoboggan_core Core drupal hooks
  */
 
+/**
+ * Implementation of hook_help()
+ *
+ * @param unknown_type $section
+ * @return unknown
+ */
 
 function logintoboggan_help($section) {
   switch ($section) {
@@ -50,7 +65,12 @@ Drupal ID: %username@%uri_brief
 
 
 --  %site team');
-      $output .= form(form_textarea('', 'foo', $example, 60, 15));
+      $form['foo'] = array(
+        '#type' => 'textarea',
+        '#default_value' => $example,
+        '#rows' => 15,
+      );
+      $output = drupal_get_form('logintoboggan_help', $form);
       return $output;
       break;
     case 'admin/modules#description':
@@ -64,6 +84,220 @@ Drupal ID: %username@%uri_brief
 }
 
 /**
+ * Implementation of hook_form_alter()
+ *
+ * @ingroup logintoboggan_core
+ */
+function logintoboggan_form_alter($form_id, &$form) {
+  switch ($form_id) {
+    case 'user_login':
+    case 'user_login_block':
+      if (variable_get('login_with_mail', 0)) {
+        $form['#validate'] = array('logintoboggan_user_login_validate' => array());
+        $form['name']['#title'] = t('Username or Email Address');
+        if (count(user_auth_help_links()) > 0) {
+          $form['name']['#description'] = t('Enter your %s username. email address, or an ID from one of our affiliates: %a.', array('%s' => variable_get('site_name', 'local'), '%a' => implode(', ', user_auth_help_links())));
+        }
+      }
+      break;
+      
+    case 'user_register':
+      $mail = variable_get('email_reg_confirm', 0);
+      $pass = variable_get('reg_passwd_set', 0);
+      if (!user_access('administer users') && ($mail || $pass)) {
+        $form['#validate'] += array('logintoboggan_user_register_validate' => array());
+        $form['#submit'] = array('logintoboggan_user_register_submit' => array());
+        //Display a confirm email address box if option is enabled.
+        if ($mail) {
+          $form['conf_mail'] = array('#type' => 'textfield', 
+            '#title' => t('Confirm E-mail address'), 
+            '#size' => 30, 
+            '#maxlength' => 64, 
+            '#description' => t('Please re-type your email address to confirm it is accurate.'), 
+            '#required' => TRUE,
+            );
+        }
+
+        //Display a password and password confirm box if users can select their own passwords.
+        if ($pass) {
+          $form['pass'] = array('#type' => 'password', 
+            '#title' => t('Password'), 
+            '#size' => 30, 
+            '#maxlength' => 30, 
+            '#description' => t('Please choose a password for your account; it must be between 6 and 30 characters and spaces are not allowed.'), 
+            '#required' => TRUE,
+            );
+          $form['conf_pass'] = array('#type' => 'password', 
+            '#title' => t('Confirm Password'), 
+            '#size' => 30, 
+            '#maxlength' => 30, 
+            '#description' => t('Please re-type your password to confirm it is accurate.'), 
+            '#required' => TRUE,
+            );
+        }
+        
+        // Have to put these in the login form group if it's been created
+        if (isset($form['account'])) {
+          $form['account']['conf_mail'] = $form['conf_mail'];
+          $form['account']['pass'] = $form['pass'];
+          $form['account']['conf_pass'] = $form['conf_pass'];
+          unset($form['conf_mail']);
+          unset($form['pass']);
+          unset($form['conf_pass']);
+        }
+      }
+      break;
+  }
+}
+
+/**
+ * Custom submit function for user registration form
+ *
+ * @ingroup logintoboggan_form
+ */
+function logintoboggan_user_register_submit($form_id, $form_values) {
+  global $base_url;
+
+  $admin = user_access('administer users');
+
+  $mail = $form_values['mail'];
+  $name = $form_values['name'];
+
+  //If we are allowing user selected passwords then skip the auto-generate function
+  if (variable_get('reg_passwd_set', 0) || $admin) {
+    $pass = $form_values['pass'];
+  }
+  else {
+    $pass = user_password();
+  }
+
+  $from = variable_get('site_mail', ini_get('sendmail_from'));
+
+  if (!$admin && array_intersect(array_keys($form_values), array('uid', 'roles', 'init', 'session', 'status'))) {
+    watchdog('security', t('Detected malicious attempt to alter protected user fields.'), WATCHDOG_WARNING);
+    drupal_goto('user/register');
+  }
+
+  $reg_pass_set = variable_get('reg_passwd_set', 0);
+
+  // Set validating id
+  $validating_id = $reg_pass_set ? logintoboggan_validating_id() : user_authenticated_id();
+
+  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => array($validating_id), 'status' => $admin || variable_get('user_register', 1))));
+
+  watchdog('user', t('New user: %name %email.', array('%name' => theme('placeholder', $name), '%email' => theme('placeholder', '<'. $mail .'>'))), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
+
+  $login_url = $reg_pass_set ? logintoboggan_eml_validate_url($account) : user_pass_reset_url($account);
+  $variables = array('%username' => $name, '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen('http://')), '%mailto' => $mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => $login_url);
+
+  // The first user may login immediately, and receives a customized welcome e-mail.
+  if ($account->uid == 1) {
+    user_mail($mail, t('drupal user account details for %s', array('%s' => $name)), strtr(t("%username,\n\nYou may now login to %uri using the following username and password:\n\n  username: %username\n  password: %password\n\n%edit_uri\n\n--drupal"), $variables), "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+    drupal_set_message(t('<p>Welcome to Drupal. You are user #1, which gives you full and immediate access.  All future registrants will receive their passwords via e-mail, so please make sure your website e-mail address is set properly under the general settings on the <a href="%settings">settings page</a>.</p><p> Your password is <strong>%pass</strong>. You may change your password below.</p>', array('%pass' => $pass, '%settings' => url('admin/settings'))));
+    user_authenticate($account->name, trim($pass));
+    drupal_goto('user/1/edit');
+  }
+  else {
+    if ($admin) {
+      drupal_set_message(t('Created a new user account. No e-mail has been sent.'));
+
+      drupal_goto('admin/user');
+    }
+    else if ($account->status) {
+      // Create new user account, no administrator approval required.
+      $subject = _user_mail_text('welcome_subject', $variables);
+      $body = _user_mail_text('welcome_body', $variables);
+      user_mail($mail, $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+      if(variable_get('reg_passwd_set', 0)) {
+        if (variable_get('reg_passwd_set', 0) == 2){
+          drupal_set_message(t('A validation email has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
+          logintoboggan_process_login($account);
+        }
+          drupal_set_message(t('A validation email has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
+
+          drupal_goto();
+      }
+      else {
+        drupal_set_message(t('Your password and further instructions have been sent to your e-mail address.'));
+
+        drupal_goto();
+      }
+    }
+    else {
+      // Create new user account, administrator approval required.
+      $subject = _user_mail_text('approval_subject', $variables);
+      $body = _user_mail_text('approval_body', $variables);
+
+      user_mail($mail, $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+      user_mail(variable_get('site_mail', ini_get('sendmail_from')), $subject, t("%u has applied for an account.\n\n%uri", array('%u' => $account->name, '%uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+      drupal_set_message(t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />In the meantime, your password and further instructions have been sent to your e-mail address.'));
+
+      drupal_goto();
+    }
+  }
+}
+
+/**
+ * Custom validation for user login form
+ *
+ * @ingroup logintoboggan_form
+ */
+function logintoboggan_user_login_validate($form_id, $form_values) {
+  if (isset($form_values['name']) && variable_get('login_with_mail', 0)) {
+    if (user_is_blocked($form_values['name'])) {
+      // blocked in user administration
+      form_set_error('login', t('The username %name has been blocked.', array('%name' => theme('placeholder', $form_values['name']))));
+    }
+    else if (drupal_is_denied('user', $form_values['name'])) {
+      // denied by access controls
+      form_set_error('login', t('The name %name is a reserved username.', array('%name' => theme('placeholder', $form_values['name']))));
+    }
+    else if ($form_values['pass']) {
+
+      $user = logintoboggan_authenticate($form_values['name'], trim($form_values['pass']));
+
+      if (!$user->uid) {
+        form_set_error('login', t('Sorry. Unrecognized username or password.') .' '. l(t('Have you forgotten your password?'), 'user/password'));
+        watchdog('user', t('Login attempt failed for %user: %error.', array('%user' => theme('placeholder', $form_values['name']), '%error' => theme('placeholder', $error))));
+        drupal_goto('user/login');
+      }
+    }
+  }
+}
+
+/**
+ * Custom validation function for user registration form
+ *
+ * @ingroup logintoboggan_form
+ */
+function logintoboggan_user_register_validate($form_id, $form_values) {
+  if (variable_get('login_with_mail', 0)) {
+    // check that it's not an email
+    if (valid_email_address($form_values['name'])) {
+      form_set_error('name', t('You may not use an email address as your username.'));
+    }
+  }
+
+  //Check to see whether our email address matches the confirm address if enabled.
+  if (variable_get('email_reg_confirm', 0)) {
+    if ($form_values['mail'] != $form_values['conf_mail']) {
+      form_set_error('conf_mail', t('Your email address and confirmed email address must match.'));
+    }
+  }
+
+  //Do some password validation if password selection is enabled.
+  if (variable_get('reg_passwd_set', 0)) {
+    if ($form_values['pass'] != $form_values['conf_pass']) {
+      form_set_error('conf_pass', t('Your password and confirmed password must match.'));
+    }
+    $pass_err = logintoboggan_validate_pass($form_values['pass']);
+    if ($pass_err) {
+      form_set_error('conf_pass', $pass_err);
+    }
+  }
+}
+
+/**
  * Implementation of hook_menu()
  *
  * @ingroup logintoboggan_core
@@ -73,316 +307,23 @@ function logintoboggan_menu($may_cache) {
   $items = array();
   if ($may_cache) {
 
-    //local tab for login form
-    $items[] = array('path' => 'toboggan/login', 'title' => t('login'), 'callback' => '_logintoboggan_login',
-      'access' => TRUE, 'type' => MENU_LOCAL_TASK, 'weight' => 1);
+    //callback for user validate routine
+    $items[] = array('path' => 'user/validate', 
+      'title' => t('validate email address'),
+      'callback' => 'logintoboggan_validate_email', 
+      'access' => TRUE, 
+      'type' => MENU_CALLBACK,
+      );
 
-    //local tab for registration form
-    $items[] = array('path' => 'toboggan/register', 'title' => t('register'), 'callback' => '_logintoboggan_register',
-      'access' => TRUE, 'type' => MENU_LOCAL_TASK, 'weight' => 2);
+    $items[] = array('path' => 'toboggan/denied', 
+      'access' => TRUE, 
+      'callback' => 'logintoboggan_denied', 
+      'title' => t('access denied'), 
+      'type' => MENU_CALLBACK,
+      );
 
-    //local tab for password request form
-    $items[] = array('path' => 'toboggan/password', 'title' => t('request new password'), 'callback' =>
-      '_logintoboggan_password', 'access' => $user->uid == 0, 'type' => MENU_LOCAL_TASK, 'weight' => 3);
-
-    //local tab for user validate routine
-    $items[] = array('path' => 'user/validate', 'title' => t('validate email address'),
-    'callback' => 'logintoboggan_validate_email', 'access' => TRUE, 'type' => MENU_CALLBACK);
-
-    $items[] = array('path' => 'toboggan/denied', 'access' => TRUE, 'callback' => 'logintoboggan_denied', 'title' => t('access denied'), 'type' => MENU_CALLBACK);
-
-  }
-  else {
-    if (variable_get('toboggan_hijack', 1)) {
-      if ($user->uid == 0){
-        if (arg(0) == 'user' && !arg(1)){
-          drupal_goto('toboggan/login');
-        }
-        elseif (arg(0) == 'user' && arg(1) == 'register'){
-          drupal_goto('toboggan/register');
-        }
-        elseif (arg(0) == 'user' && arg(1) == 'password'){
-          drupal_goto('toboggan/password');
-        }
-      }
-    }
   }
   return $items;
-}
-
-//custom login form
-function _logintoboggan_login($msg = '', $title = NULL) {
-
-  global $user, $base_url;
-
-  $edit = $_POST['edit'];
-
-  // If we are already logged on, go to the user page instead.
-  if ($user->uid) {
-    drupal_goto('user');
-  }
-
-  if (isset($edit['name'])) {
-    if (user_is_blocked($edit['name'])) {
-      // blocked in user administration
-      $error = t('The username %name has been blocked.', array('%name' => theme('placeholder', $edit['name'])));
-    }
-    else if (drupal_is_denied('user', $edit['name'])) {
-      // denied by access controls
-      $error = t('The name %name is a reserved username.', array('%name' => theme('placeholder', $edit['name'])));
-    }
-    else if ($edit['pass']) {
-
-      if (!$user->uid) {
-        $user = logintoboggan_authenticate($edit['name'], trim($edit['pass']));
-      }
-
-      if ($user->uid) {
-        watchdog('user', t('Session opened for %name.', array('%name' => theme('placeholder', $user->name))));
-
-        // Update the user table timestamp noting user has logged in.
-        db_query("UPDATE {users} SET login = '%d' WHERE uid = '%s'", time(), $user->uid);
-
-        user_module_invoke('login', $edit, $user);
-
-        // Redirect the user to the page he logged on from.
-        drupal_goto();
-      }
-      else {
-        if (!$error) {
-          $error = t('Sorry. Unrecognized username or password.') .' '. l(t('Have you forgotten your password?'), 'toboggan/password');
-        }
-        watchdog('user', t('Login attempt failed for %user: %error.', array('%user' => theme('placeholder', $edit['name']), '%error' => theme('placeholder', $error))));
-      }
-    }
-  }
-
-  // Display error message (if any):
-  if ($error) {
-    drupal_set_message($error, 'error');
-  }
-
-  // Display login form:
-  if ($msg) {
-    $output .= "<p>$msg</p>";
-  }
-  if (count(user_auth_help_links()) > 0) {
-    if (variable_get('login_with_mail', 0)) {
-      $output .= form_textfield(t('Username or Email Address'), 'name', $edit['name'], 30, 64, t('Enter your %s registered username or password, or an ID from one of our affiliates: %a.', array('%s' => variable_get('site_name', 'local'), '%a' => implode(', ', user_auth_help_links()))));
-    }
-    else {
-      $output .= form_textfield(t('Username'), 'name', $edit['name'], 30, 64, t('Enter your %s username, or an ID from one of our affiliates: %a.', array('%s' => variable_get('site_name', 'local'), '%a' => implode(', ', user_auth_help_links()))));
-    }
-  }
-  else {
-    if (variable_get('login_with_mail', 0)) {
-      $output .= form_textfield(t('Username or Email Address'), 'name', $edit['name'], 30, 64, t('Enter your %s username or email address.', array('%s' => variable_get('site_name', 'local'))));
-    }
-    else {
-      $output .= form_textfield(t('Username'), 'name', $edit['name'], 30, 64, t('Enter your %s username.', array('%s' => variable_get('site_name', 'local'))));
-    }
-  }
-  $output .= form_password(t('Password'), 'pass', $pass, 30, 64, t('Enter the password that accompanies your username.'));
-  $output .= form_submit(t('Log in'));
-
-  drupal_set_title($title ? $title : t('user account'));
-  $output = form($output, 'post', url('toboggan/login', logintoboggan_destination()));
-  return $output;
-}
-
-
-//custom registration form
-function _logintoboggan_register() {
-
-  global $user, $base_url;
-
-  $edit = $_POST['edit'];
-
-  // If we are already logged on, go to the user page instead.
-  if ($user->uid) {
-    drupal_goto('user/'. $user->uid);
-  }
-
-  if ($edit) {
-    if (variable_get('login_with_mail', 0)) {
-      // check that it's not an email
-      if (valid_email_address($edit['name'])) {
-        form_set_error('name', t('You may not use an email address as your username.'));
-      }
-    }
-
-    //Check to see whether our email address matches the confirm address if enabled.
-    if (variable_get('email_reg_confirm', 0)) {
-      if ($edit['mail'] != $edit['conf_mail']) {
-        form_set_error('conf_mail', t('Your email address and confirmed email address must match.'));
-      }
-    }
-
-    //Do some password validation if password selection is enabled.
-    if (variable_get('reg_passwd_set', 0)) {
-      if ($edit['pass'] != $edit['conf_pass']) {
-        form_set_error('conf_pass', t('Your password and confirmed password must match.'));
-      }
-      $pass_err = logintoboggan_validate_pass($edit['pass']);
-      if ($pass_err) {
-        form_set_error('conf_pass', $pass_err);
-      }
-    }
-
-    user_module_invoke('validate', $edit, $edit, 'account');
-
-    if (!form_get_errors()) {
-      //unset the confirmation variables because we don't care anymore and we don't want them stored
-      if (variable_get('reg_passwd_set', 0)) {
-      	unset($edit['conf_pass']);
-      }
-      if (variable_get('email_reg_confirm', 0)) {
-      	unset($edit['conf_mail']);
-      }
-
-      $from = variable_get('site_mail', ini_get('sendmail_from'));
-
-      //If we are allowing user selected passwords then skip the auto-generate function
-      if (variable_get('reg_passwd_set', 0)) {
-      	$pass = $edit['pass'];
-      }
-      else {
-        $pass = user_password();
-      }
-
-      // TODO: Is this necessary? Won't session_write() replicate this?
-      unset($edit['session']);
-      if (array_intersect(array_keys($edit), array('uid', 'roles', 'init', 'session', 'status'))) {
-        watchdog('security', t('Detected malicious attempt to alter protected user fields.'), WATCHDOG_WARNING);
-        drupal_goto('toboggan/register');
-      }
-      //If password selection is enabled put the user in the 'validating' role initially until they confirm their email address.
-      if (variable_get('reg_passwd_set', 0) || variable_get('toboggan_immed_login', 0)) {
-      	$account = user_save('', array_merge($edit, array('pass' => $pass, 'init' => $edit['mail'], 'roles' => array(logintoboggan_validating_id()), 'status' => (variable_get('user_register', 1) == 1 ? 1 : 0))));
-      } else {
-        $account = user_save('', array_merge($edit, array('pass' => $pass, 'init' => $edit['mail'], 'roles' => array(_user_authenticated_id()), 'status' => (variable_get('user_register', 1) == 1 ? 1 : 0))));
-      }
-      watchdog('user', t('New user: %name %email.', array('%name' => theme('placeholder', $edit['name']), '%email' => theme('placeholder', '<'. $edit['mail'] .'>'))), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
-
-      //If password selection is enabled create a %validate_url variable for use in the email.
-      if (variable_get('reg_passwd_set', 0) || variable_get('toboggan_immed_login', 0)) {
-        $variables = array('%username' => $edit['name'], '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen('http://')), '%mailto' => $edit['mail'], '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => logintoboggan_eml_validate_url($account));
-      } else {
-        $variables = array('%username' => $edit['name'], '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen('http://')), '%mailto' => $edit['mail'], '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => user_pass_reset_url($account));
-      }
-
-      if ($account->status) {
-        // Create new user account, no administrator approval required.
-        $subject = _user_mail_text('welcome_subject', $variables);
-        $body = _user_mail_text('welcome_body', $variables);
-        user_mail($edit['mail'], $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
-        if(variable_get('reg_passwd_set', 0)){
-          if (variable_get('toboggan_immed_login', 0)){
-            drupal_set_message(t('A validation email has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
-            logintoboggan_process_login($account);
-          }
-          return t('A validation email has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.');
-        }
-        else {
-          return t('Your password and further instructions have been sent to your e-mail address.');
-        }
-      } else {
-        // Create new user account, administrator approval required.
-        $subject = _user_mail_text('approval_subject', $variables);
-        $body = _user_mail_text('approval_body', $variables);
-
-        user_mail($edit['mail'], $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
-        user_mail(variable_get('site_mail', ini_get('sendmail_from')), $subject, t("%u has applied for an account.\n\n%uri", array('%u' => $account->name, '%uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
-        return t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />In the meantime, your password and further instructions have been sent to your e-mail address.');
-      }
-    }
-  }
-
-  // Display the registration form.
-  $output .= variable_get('user_registration_help', '');
-  $affiliates = user_auth_help_links();
-  if (count($affiliates) > 0) {
-    $affiliates = implode(', ', $affiliates);
-    $output .= '<p>'. t('Note: if you have an account with one of our affiliates (%s), you may <a href="%login_uri">login now</a> instead of registering.', array('%s' => $affiliates, '%login_uri' => url('user'))) .'</p>';
-  }
-  $default = form_textfield(t('Username'), 'name', $edit['name'], 50, 64, t('Your full name or your preferred username; only letters, numbers and spaces are allowed.'), NULL, TRUE);
-  $default .= form_textfield(t('E-mail address'), 'mail', $edit['mail'], 50, 64, t('A password and instructions will be sent to this e-mail address from %sitemail, please check your SPAM filters.', array('%sitemail' => variable_get('site_mail', ini_get('sendmail_from')))), NULL, TRUE);
-
-  //Display a confirm email address box if option is enabled.
-  if (variable_get('email_reg_confirm', 0)) {
-     $default .= form_textfield(t('Confirm E-mail address'), 'conf_mail', $edit['conf_mail'], 50, 64, t('Please re-type your email address to confirm it is accurate.'), NULL, TRUE);
-  }
-
-  //Display a password and password confirm box if users can select their own passwords.
-  if (variable_get('reg_passwd_set', 0)) {
-     $default .= form_password(t('Password'), 'pass', $edit['pass'], 50, 30, t('Please choose a password for your account; it must be between 6 and 30 characters and spaces are not allowed.'), NULL, TRUE);
-     $default .= form_password(t('Confirm Password'), 'conf_pass', $edit['conf_pass'], 50, 30, t('Please re-type your password to confirm it is accurate.'), NULL, TRUE);
-  }
-  // Profile.module checks the path, so we have to fake it out
-  $oldget = $_GET['q'];
-  $_GET['q'] = 'user/register';
-  $extra = _user_forms($edit, $account, $category, 'register');
-  $_GET['q'] = $oldget;
-
-  // Only display form_group around default fields if there are other groups.
-  if ($extra) {
-    $output .= form_group(t('Account information'), $default);
-    $output .= $extra;
-  }
-  else {
-    $output .= $default;
-  }
-
-  $output .= form_submit(t('Create new account'));
-  drupal_set_title(t('new user registration'));
-  $form = form($output, 'post', url('toboggan/register', drupal_get_destination()));
-  print theme('page', form($form));
-}
-
-//custom password request form
-function _logintoboggan_password() {
-
-  global $base_url;
-  $edit = $_POST['edit'];
-
-  if ($edit['name'] && !($account = user_load(array('name' => $edit['name'], 'status' => 1)))) {
-    form_set_error('name', t('Sorry. The username %name is not recognized.', array('%name' => theme('placeholder', $edit['name']))));
-  }
-  else if ($edit['mail'] && !($account = user_load(array('mail' => $edit['mail'], 'status' => 1)))) {
-    form_set_error('mail', t('Sorry. The e-mail address %email is not recognized.', array('%email' => theme('placeholder', $edit['mail']))));
-  }
-  if ($account) {
-    $from = variable_get('site_mail', ini_get('sendmail_from'));
-
-    // Mail one time login URL and instructions.
-    $variables = array('%username' => $account->name, '%site' => variable_get('site_name', 'drupal'), '%login_url' => user_pass_reset_url($account), '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen('http://')), '%mailto' => $account->mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE));
-    $subject = _user_mail_text('pass_subject', $variables);
-    $body = _user_mail_text('pass_body', $variables);
-    $headers = "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from";
-    $mail_success = user_mail($account->mail, $subject, $body, $headers);
-
-    if ($mail_success) {
-      watchdog('user', t('Password reset instructions mailed to %name at %email.', array('%name' => '<em>'. $account->name .'</em>', '%email' => '<em>'. $account->mail .'</em>')));
-      drupal_set_message(t('Further instructions have been sent to your e-mail address.'));
-    }
-    else {
-      watchdog('user', t('Error mailing password reset instructions to %name at %email.', array('%name' => theme('placeholder', $account->name), '%email' => theme('placeholder', $account->mail))), WATCHDOG_ERROR);
-      drupal_set_message(t('Unable to send mail. Please contact the site admin.'));
-    }
-    drupal_goto('toboggan/login');
-  } else {
-    if ($edit) {
-      drupal_set_message(t('You must provide either a username or e-mail address.'), 'error');
-    }
-    // Display form:
-    $output = '<p>'. t('Enter your username <strong><em>or</em></strong> your e-mail address.') .'</p>';
-    $output .= form_textfield(t('Username'), 'name', $edit['name'], 30, 64);
-    $output .= form_textfield(t('E-mail address'), 'mail', $edit['mail'], 30, 64);
-    $output .= form_submit(t('E-mail new password'));
-  drupal_set_title(t('password reset'));
-  $form = form($output, 'post', url('toboggan/password', drupal_get_destination()));
-  print theme('page', form($form));
-  }
 }
 
 //support function which returns the custom login link
@@ -390,12 +331,12 @@ function _logintoboggan_link() {
   global $user;
 
   //not logged in, then display the login/register link
-  if (!$user->uid && !(arg(0) == 'user' && !is_numeric(arg(1))) && !(arg(0) == 'toboggan')) {
-  	        return l(t('login/register'), 'toboggan/login');
+  if (!$user->uid && !(arg(0) == 'user' && !is_numeric(arg(1)))) {
+  	return l(t('Login/Register'), 'user/login', array(), drupal_get_destination());
 
   //otherwise display the username you are logged in as.
   } elseif ($user->uid) {
-    return 'logged in | ' . l(t('logout'), 'logout');
+    return theme_lt_loggedinblock();
 
   }
 }
@@ -418,15 +359,11 @@ function logintoboggan_block($op = 'list', $delta = 0, $edit = array()) {
       break;
     case 'configure':
       if ($delta == 1){
-        $output .= form_textarea(t('Set a custom message to appear at the top of your login block'), 'toboggan_block_msg', variable_get('toboggan_block_msg', ''), 200, 5);
-        $form['toboggan_block_msg'] = array('#type' => 'textarea', '#title' => t('Set a custom message to appear at the top of your login block'), '#default_value' => variable_get('toboggan_block_msg', ''), '#cols' => 60, '#rows' => 5);
-
-        if (function_exists('form_render')){
-          return $form;
-        }
-        else {
-          return $output;
-        }
+        $form['toboggan_block_msg'] = array('#type' => 'textarea', 
+          '#title' => t('Set a custom message to appear at the top of your login block'), 
+          '#default_value' => variable_get('toboggan_block_msg', ''),
+          );
+        return $form;
       }
       break;
     case 'save' :
@@ -435,22 +372,20 @@ function logintoboggan_block($op = 'list', $delta = 0, $edit = array()) {
       }
       break;
     case 'view' :
-      if (user_access('access content')) {
-        switch ($delta) {
-          case 0:
-            $block['content'] = _logintoboggan_link();
-            return $block;
-          case 1:
-            // For usability's sake, avoid showing two login forms on one page.
-            if (!$user->uid && !(arg(0) == 'user' && !is_numeric(arg(1))) && !(arg(0) == 'toboggan')) {
-              $edit = $_POST['edit'];
-              $block['content'] = _logintoboggan_toggleboggan($edit);
-            }
-            elseif ($user->uid) {
-              $block['content'] =  theme('lt_loggedinblock');
-            }
-            return $block;
-        }
+      switch ($delta) {
+        case 0:
+          $block['content'] = _logintoboggan_link();
+          return $block;
+        case 1:
+          // For usability's sake, avoid showing two login forms on one page.
+          if (!$user->uid && !(arg(0) == 'user' && !is_numeric(arg(1)))) {
+            $edit = $_POST['edit'];
+            $block['content'] = _logintoboggan_toggleboggan($edit);
+          }
+          elseif ($user->uid) {
+            $block['content'] =  theme('lt_loggedinblock');
+          }
+          return $block;
       }
       break;
   }
@@ -466,7 +401,16 @@ function theme_lt_loggedinblock(){
   return $user->name .' | ' . l(t('log out'), 'logout');
 }
 
-//inline javascript functionality for a collapsible login block
+/**
+ * User login block with JavaScript to expand
+ * 
+ * this should really be themed
+ *
+ * @param array $edit
+ * @return string
+ *   the rendered html
+ */
+
 function _logintoboggan_toggleboggan ($edit = array()){
   $output = '<div id="toboggan_container">';
   $output .= l(t('Login/Register'), 'toboggan/login', array('onclick' => "toggleboggan('toboggan_login');this.blur();return false;"));
@@ -476,18 +420,27 @@ function _logintoboggan_toggleboggan ($edit = array()){
     $output .= '<div>'. $login_msg .'</div>';
   }
   //the block that will be toggled
-  $output .= '<div id="toboggan_login">';
-  $output .= '<div class="user-login-block">';
+  $output .= '<div id="toboggan_login" class="user-login-block">';
   $nametitle = (variable_get('login_with_mail', 0)) ? t('Username or Email') : t('Username');
-  $form = form_textfield($nametitle, 'name', $edit['name'], 15, 64);
-  $form .= form_password(t('Password'), 'pass', $pass, 15, 64);
-  $form .= form_submit(t('Log in'));
-  $output  .= form($form, 'post', url('toboggan/login', drupal_get_destination()));
-  $output .= '</div>';
+  $form['#attributes'] = array('id' => 'user-login-form');
+  $form['name'] = array('#type' => 'textfield', 
+    '#title' => $nametitle, 
+    '#maxlength' => 64, 
+    '#size' => 15,
+    );
+  $form['pass'] = array('#type' => 'password', 
+    '#title' => t('Password'), 
+    '#maxlength' => 64, 
+    '#size' => 15,
+    );
+  $form['submit'] = array('#type' => 'submit', 
+    '#value' => t('Log in'),
+    );
+  $output .= drupal_get_form('user_login_block', $form, 'user_login');
   if (variable_get('user_register', 1)) {
-    $items[] = l(t('Register a new account'), 'toboggan/register', array('title' => t('Create a new user account.')));
+    $items[] = l(t('Register a new account'), 'user/register', array('title' => t('Create a new user account.')));
   }
-    $items[] = l(t('Request new password'), 'toboggan/password', array('title' => t('Request new password via e-mail.')));
+    $items[] = l(t('Request new password'), 'user/password', array('title' => t('Request new password via e-mail.')));
   $output .= theme('item_list', $items);
   $output .= '</div></div>';
 
@@ -506,127 +459,100 @@ function _logintoboggan_toggleboggan ($edit = array()){
 
 function logintoboggan_settings() {
   $version .= str_replace(array('$Re'.'vision:', '$Da'.'te:', '$'), array('', '', ''), '<p style="font-size:x-small">Login Toboggan version: <b>$Revision$</b>, $Date$</p>');
-  if (function_exists('form_render')) {
-    // new form api version
-    $form['login'] = array('#type' => 'fieldset', '#title' => t('Login'), '#tree' => FALSE, '#prefix' => $version);
 
-    $form['login']['login_with_mail'] = array('#type' => 'radios', '#title' => t('Allow users to login using their email address'), '#name' => 'login_with_mail', '#default_value' => variable_get('login_with_mail', 0), '#options' => array(t('disabled'), t('enabled')), '#description' => t('Users will be able to enter EITHER their username OR their email address to log in. note: This will disallow users from registering using an email address as their username.'));
+  $form['login'] = array('#type' => 'fieldset', 
+    '#title' => t('Login'), 
+    '#prefix' => $version,
+    );
 
-    $form['registration'] = array('#type' => 'fieldset', '#title' => t('Registration'), '#tree' => FALSE);
+  $form['login']['login_with_mail'] = array('#type' => 'radios', 
+    '#title' => t('Allow users to login using their email address'), 
+    '#default_value' => variable_get('login_with_mail', 0), 
+    '#options' => array(t('disabled'), t('enabled')), 
+    '#description' => t('Users will be able to enter EITHER their username OR their email address to log in. note: This will disallow users from registering using an email address as their username.'),
+    );
 
-    $form['registration']['email_reg_confirm'] = array('#type' => 'radios', '#title' => t('Use two email fields on registration form'), '#name' => 'email_reg_confirm', '#default_value' => variable_get('email_reg_confirm', 0), '#options' => array(t('disabled'), t('enabled')), '#description' => t('User will have to type the same email address into both fields. This helps to confirm that they\'ve typed the correct address.'));
+  $form['registration'] = array('#type' => 'fieldset', 
+    '#title' => t('Registration'),
+    );
 
-    $form['registration']['reg_passwd_set'] = array('#type' => 'radios', '#title' => t('Set password during registration'), '#name' => 'reg_passwd_set', '#default_value' => variable_get('reg_passwd_set', 0), '#options' => array(t('disabled'), t('enabled')), '#description' => t('This will allow users to choose their initial password when registering.'));
+  $form['registration']['email_reg_confirm'] = array('#type' => 'radios', 
+    '#title' => t('Use two email fields on registration form'), 
+    '#default_value' => variable_get('email_reg_confirm', 0), 
+    '#options' => array(t('disabled'), t('enabled')), 
+    '#description' => t('User will have to type the same email address into both fields. This helps to confirm that they\'ve typed the correct address.'),
+    );
 
-    $form['registration']['toboggan_immed_login'] = array('#type' => 'radios', '#title' => t('Immediate login'), '#name' => 'reg_passwd_set', '#default_value' => variable_get('toboggan_immed_login', 0), '#options' => array(t('disabled'), t('enabled')), '#description' => t('When enabled, users will be assigned to the role below and logged in immediately. They will not be assigned to the "athenticated user" role until they confirm their email address by following the link in their registration email. It is HIGHLY recommended that you set up a "pre-authorized" role with limited permissions for this purpose.'));
+  $form['registration']['reg_passwd_set'] = array('#type' => 'radios', 
+    '#title' => t('Allow user to set their password during registration'), 
+    '#default_value' => variable_get('reg_passwd_set', 0), 
+    '#options' => array(t('Disabled'), t('Set Password'), t('Set password & Immediate login')), 
+    '#description' => t('This will allow users to choose their initial password when registering.  If \'Set password & Immediate login\' is selected, users will be assigned to the role below and logged in immediately. They will not be assigned to the "athenticated user" role until they confirm their email address by following the link in their registration email. It is HIGHLY recommended that you set up a "pre-authorized" role with limited permissions for this purpose. <br />NOTE: If you enable either of these features, you should edit the %settings--more help in writing the email message can be found %help.', array('%settings' => l('user email welcome message', 'admin/settings/user'), '%help' => l('logintoboggan help', 'admin/help/logintoboggan'))),
+    );
 
-    $form ['registration']['toboggan_role'] = array('#type' => 'select', '#title' => t('Non-authenticated role'), '#options' => user_roles(), '#default_value' => variable_get('toboggan_role', 1), '#description' => t('If either "Set password during registration" or "Immediate login" is selected, users will be able to login before their email address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the "authenticated user" once they follow the link in their welcome email. Add new roles <a href="%url">here</a>.', array('%url' => url('admin/access/roles'))));
+  $form ['registration']['toboggan_role'] = array('#type' => 'select', 
+    '#title' => t('Non-authenticated role'), 
+    '#options' => user_roles(), 
+    '#default_value' => variable_get('toboggan_role', 1), 
+    '#description' => t('If either "Set password during registration" or "Immediate login" is selected, users will be able to login before their email address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the "authenticated user" once they follow the link in their welcome email. Add new roles <a href="%url">here</a>.', array('%url' => url('admin/access/roles'))),
+    );
 
-    $form['other'] = array('#type' => 'fieldset', '#title' => t('Other'), '#tree' => FALSE);
+  $form['other'] = array('#type' => 'fieldset', 
+    '#title' => t('Other'),
+    '#tree' => FALSE,
+    );
 
-    $site403 = variable_get('site_403', 0);
-    $disabled = ($site403 == 'toboggan/denied') ? '' : $site403;
-    $options = array($disabled => t('disabled'), 'toboggan/denied' => t('enabled'));
-
-    $form['other']['site_403'] = array('#type' => 'radios', '#title' => t('Present login form on access denied (403)'), '#options' => $options, '#default_value' => $site_403, '#description' => t('Anonymous users will be presented with a login form along with an access denied message.'));
-
-    $form['other']['toboggan_hijack'] = array('#type' => 'radios', '#title' => t('Redirect Drupal\'s login paths'), '#default_value' => variable_get('toboggan_hijack', 1), '#options' => array(t('disabled'), t('enabled')), '#description' => t('If enabled, anonymous users who are sent to "user", "user/register", or "user/password" will be redirected to the Login Toboggan counterparts. (Enabled by default)'));
-
-    return $form;
-
+  $site403 = variable_get('site_403', '');
+  if ($site403 == 'toboggan/denied'){
+    $disabled = '';
   }
   else {
-
-    // Drupal 4.6
-    $output = $version;
-
-    $output .= form_radios(t('Allow users to login using their email address'), 'login_with_mail', variable_get('login_with_mail', 0), array(t('disabled'), t('enabled')), t('note: This will disallow users from registering using an email address as their username.'));
-
-    $group .= form_radios(t('Use two email fields on registration form'), 'email_reg_confirm', variable_get('email_reg_confirm', 0), array(t('disabled'), t('enabled')), t('User will have to type the same email address into both fields. This helps to confirm that they\'ve typed the correct address.'));
-
-    $group .= form_radios(t('Set password during registration'), 'reg_passwd_set', variable_get('reg_passwd_set', 0), array(t('disabled'), t('enabled')), t('This will allow users to choose their initial password when registering.'));
-
-    $group .= form_radios(t('Immediate login'), 'toboggan_immed_login', variable_get('toboggan_immed_login', 0), array(t('disabled'), t('enabled')), t('When enabled, users will be assigned to the role below and logged in immediately. They will not be assigned to the "athenticated user" role until they confirm their email address by following the link in their registration email. It is HIGHLY recommended that you set up a "pre-authorized" role with limited permissions for this purpose.'));
-
-      $group .= form_select(t('Non-authenticated role'), 'toboggan_role', variable_get('toboggan_role', 1), user_roles(), t('If either "Set password during registration" or "Immediate login" is selected, users will be able to login before their email address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the "authenticated user" once they follow the link in their welcome email. Add new roles <a href="%url">here</a>.', array('%url' => url('admin/access/roles'))));
-    $output .= form_group(t('Registration'), $group);
-
-    $site403 = variable_get('site_403', 0);
-    $disabled = ($site403 == 'toboggan/denied') ? '' : $site403;
-    $options = array($disabled => t('disabled'), 'toboggan/denied' => t('enabled'));
-
-    $output .= form_radios(t('Present login form on access denied (403)'), 'site_403', $site403, $options, t('Anonymous users will be presented with a login form along with an access denied message.'));
-
-    $output .= form_radios(t('Redirect Drupal\'s login paths'), 'toboggan_hijack', variable_get('toboggan_hijack', 1), array(t('disabled'), t('enabled')), t('If enabled, anonymous users who are sent to "user", "user/register", or "user/password" will be redirected to the Login Toboggan counterparts. (Enabled by default)'));
-    return $output;
+    $disabled = $site403;
   }
+  $options = array($disabled => t('disabled'), 'toboggan/denied' => t('enabled'));
+
+  $form['other']['site_403'] = array(
+    '#type' => 'radios',
+    '#title' => t('Present login form on access denied (403)'),
+    '#options' => $options,
+    '#default_value' => $site403,
+    '#description' => t('Anonymous users will be presented with a login form along with an access denied message.')
+  );
+
+  return $form;
 }
 
 /**
-  * Modified version of user authenticate
+  * Wrapper for user_authenticate()
   * - allows users to login using their email address
   */
 
 function logintoboggan_authenticate($name, $pass) {
-  global $user;
+  
+  // first see if $name is a valid username
+  $account = user_load(array('name' => $name));
 
-  // Try to log in the user locally:
-  $user = user_load(array('name' => $name, 'pass' => $pass, 'status' => 1));
-
-  // Didn't work? See if it's an email address.
-  if (!$user->uid && variable_get('login_with_mail', 0)) {
-    $user = user_load(array('mail' => $name, 'pass' => $pass, 'status' => 1));
-  }
-
-  // Strip name and server from ID:
-  if ($server = strrchr($name, '@')) {
-    $name = substr($name, 0, strlen($name) - strlen($server));
-    $server = substr($server, 1);
-  }
-
-  // When possible, determine corresponding external auth source. Invoke
-  // source, and log in user if successful:
-  if (!$user->uid && $server && $result = user_get_authmaps("$name@$server")) {
-    if (module_invoke(key($result), 'auth', $name, $pass, $server)) {
-      $user = user_external_load("$name@$server");
-      watchdog('user', t('External load by %user using module %module.', array('%user' => theme('placeholder', $name .'@'. $server), '%module' => theme('placeholder', key($result)))));
-    }
-    else {
-      $error = t('Invalid password for %s.', array('%s' => theme('placeholder', $name .'@'. $server)));
+  // if not, see if user is logging in with a user's email address
+  if (!$account->uid && variable_get('login_with_mail', 0)) {
+    if($account = user_load(array('mail' => $name))) {
+      $name = $account->name;
     }
   }
-
-  // Try each external authentication source in series. Register user if
-  // successful.
-  else if (!$user->uid && $server) {
-    foreach (module_list() as $module) {
-      if (module_hook($module, 'auth')) {
-        if (module_invoke($module, 'auth', $name, $pass, $server)) {
-          if (variable_get('user_register', 1) == 1) {
-            $account = user_load(array('name' => "$name@$server"));
-            if (!$account->uid) { // Register this new user.
-              $user = user_save('', array('name' => "$name@$server", 'pass' => user_password(), 'init' => "$name@$server", 'status' => 1, "authname_$module" => "$name@$server", 'roles' => array(_user_authenticated_id())));
-              watchdog('user', t('New external user: %user using module %module.', array('%user' => theme('placeholder', $name .'@'. $server), '%module' => theme('placeholder', $module))), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $user->uid .'/edit'));
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
-  return $user;
+  
+  // hand it off to user_authenticate for the good stuff
+  return user_authenticate($name, $pass);
 }
 
 function logintoboggan_denied() {
   global $user;
   if ($user->uid == 0) {
     $msg = t('Access Denied. You may need to log in to access this page.');
-    $title = t('Access Denied / User Login');
+    drupal_set_title(t('Access Denied / User Login'));
     // set up the tabs
-    $item[] = array('path' => 'toboggan/login', 'title' => t('Access Denied'));
+    $item[] = array('path' => 'user/login', 'title' => t('Access Denied'));
     menu_set_location($item);
 
-    $return = _logintoboggan_login($msg, $title);
+    $return = user_login($msg);
   }
   else {
     drupal_set_title(t('Access Denied'));
@@ -694,52 +620,36 @@ function logintoboggan_validating_id() {
   return variable_get('toboggan_role', 1);
 }
 
+
 /**
-  * logintoboggan_create_role
-  * - If the "validating" role doesn't exist it creates the role.
-  */
-
-/*
-function logintoboggan_create_role() {
-   if (!logintoboggan_validating_id()) {
-   	db_query("INSERT INTO {role} (name) VALUES ('%s')", 'validating');
-   	drupal_set_message(t("Added 'validating' role to database.  You will need to set permissions appropriately."));
-   } else {
-   	drupal_set_message(t("Role: 'validating' already exists in the database.  Permissions should be maintained by an administrator."));
-   }
- }
+ * Menu callback; process validate the email address as a one time URL,
+ * and redirects to the user page on success.
  */
+function logintoboggan_validate_email($uid, $timestamp, $hashed_pass) {
+  global $user;
+  $current = time();
+  // Some redundant checks for extra security
+  if ($timestamp < $current && is_numeric($uid) && $account = user_load(array('uid' => $uid, 'status' => 1)) ) {
+    // No time out for first time login.
+    if ($account->uid && !empty($account) && $timestamp < $current &&
+        $hashed_pass == logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail)) {
+      watchdog('user', t('Email validation URL used for %name with timestamp %timestamp.', array('%name' => "<em>$account->name</em>", '%timestamp' => $timestamp)));
+      // Update the user table noting user has logged in.
+      // And this also makes this hashed password a one-time-only login.
+      db_query("UPDATE {users} SET login = '%d' WHERE uid = %d", time(), $account->uid);
+      db_query("UPDATE {users_roles} SET rid ='%d' WHERE uid = %d AND rid = %d", _user_authenticated_id(), $account->uid, logintoboggan_validating_id());
 
- /**
-  * Menu callback; process validate the email address as a one time URL,
-  * and redirects to the user page on success.
-  */
- function logintoboggan_validate_email($uid, $timestamp, $hashed_pass) {
-   global $user;
-   $current = time();
-   // Some redundant checks for extra security
-   if ($timestamp < $current && is_numeric($uid) && $account = user_load(array('uid' => $uid, 'status' => 1)) ) {
-     // No time out for first time login.
-     if ($account->uid && !empty($account) && $timestamp < $current &&
-         $hashed_pass == logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail)) {
-       watchdog('user', t('Email validation URL used for %name with timestamp %timestamp.', array('%name' => "<em>$account->name</em>", '%timestamp' => $timestamp)));
-       // Update the user table noting user has logged in.
-       // And this also makes this hashed password a one-time-only login.
-       db_query("UPDATE {users} SET login = '%d' WHERE uid = %d", time(), $account->uid);
-       db_query("UPDATE {users_roles} SET rid ='%d' WHERE uid = %d AND rid = %d", _user_authenticated_id(), $account->uid, logintoboggan_validating_id());
-
-       // Now we can set the new user.
-       $user = $account;
-       // And proceed with normal login, going to user page.
-       drupal_set_message(t("You have successfully validated your email address."));
-       logintoboggan_process_login($user);
-
-     }
-   }
-   // Deny access, no more clues.
-   // Everything will be in the watchdog's URL for the administrator to check.
-   drupal_access_denied();
- }
+      // Now we can set the new user.
+      $user = $account;
+      // And proceed with normal login, going to user page.
+      drupal_set_message(t("You have successfully validated your email address."));
+      logintoboggan_process_login($user);
+    }
+  }
+  // Deny access, no more clues.
+  // Everything will be in the watchdog's URL for the administrator to check.
+  drupal_access_denied();
+}
 
 /**
  * Actually log the user on
@@ -772,5 +682,3 @@ function logintoboggan_process_login($account){
 function logintoboggan_eml_rehash($password, $timestamp, $mail){
   return md5($timestamp . $password . $mail);
 }
-
-?>
