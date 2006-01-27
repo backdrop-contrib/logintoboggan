@@ -99,6 +99,13 @@ function logintoboggan_form_alter($form_id, &$form) {
         if (count(user_auth_help_links()) > 0) {
           $form['name']['#description'] = t('Enter your %s username. email address, or an ID from one of our affiliates: %a.', array('%s' => variable_get('site_name', 'local'), '%a' => implode(', ', user_auth_help_links())));
         }
+        if($GLOBALS['logintoboggan_denied'] == TRUE){
+          $form[] = array(
+            '#type' => 'hidden',
+            '#name' => 'destination',
+            '#value' => logintoboggan_destination(),
+          );
+        }
       }
       break;
 
@@ -552,7 +559,8 @@ function logintoboggan_denied() {
     // set up the tabs
     $item[] = array('path' => 'user/login', 'title' => t('Access Denied'));
     menu_set_location($item);
-
+    global $logintoboggan_denied;
+    $logintoboggan_denied = TRUE;
     $return = user_login($msg);
   }
   else {
@@ -578,12 +586,12 @@ function logintoboggan_destination() {
     if (!variable_get('clean_url', 0)) {
       $uriarray[0] = str_replace('?q=', '', $uriarray[0]);
     }
-    $destination = 'destination='. implode('/', $uriarray);
+    $destination = implode('/', $uriarray);
   }
   else {
     // can't get uri?
     // so we'll fallback to user account page
-    $destination = 'destination=user';
+    $destination = 'user';
   }
   $output = $destination;
   return $output;
