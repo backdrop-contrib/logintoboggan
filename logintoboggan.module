@@ -472,7 +472,7 @@ function theme_lt_loggedinblock(){
  */
 
 function _logintoboggan_toggleboggan ($form) {
-  $pre = '<div id="toboggan_container">';
+  $pre = '<div id="toboggan-container">';
   $pre .= l(t('Login/Register'), 'toboggan/login', array('onclick' => "toggleboggan('toboggan_login');this.blur();return false;"));
 
   //Grab the message from settings if there is one to display at the top of the login block.
@@ -480,7 +480,7 @@ function _logintoboggan_toggleboggan ($form) {
     $pre .= '<div>'. $login_msg .'</div>';
   }
   //the block that will be toggled
-  $pre .= '<div id="toboggan_login" class="user-login-block">';
+  $pre .= '<div id="toboggan-login" class="user-login-block">';
   $form['pre'] = array('#value' => $pre, '#weight' => -300);
 
   $post .= '</div></div>';
