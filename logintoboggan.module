@@ -613,10 +613,11 @@ function theme_lt_access_denied() {
 // with custom 403, drupal_get_destination() would return toboggan/denied
 // which would show 'Access Denied' after login... what good is that!?
 function logintoboggan_destination() {
+  global $base_url;
   // Drupal has reset $_GET[q], so we need a workaround.
-  if ($uri = request_uri()) {
-    $uriarray = explode('/', $uri);
-    array_shift($uriarray);
+  $full_path = 'http://'. $_SERVER['SERVER_NAME'] . request_uri();
+  if ($internal_path = substr($full_path, strlen($base_url . '/'))) {
+    $uriarray = explode('/', $internal_path);
     if (!variable_get('clean_url', 0)) {
       $uriarray[0] = str_replace('?q=', '', $uriarray[0]);
     }
@@ -627,8 +628,7 @@ function logintoboggan_destination() {
     // so we'll fallback to user account page
     $destination = 'user';
   }
-  $output = $destination;
-  return $output;
+  return $destination;
 }
 
 /**
