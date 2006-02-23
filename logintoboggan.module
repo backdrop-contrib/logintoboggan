@@ -126,11 +126,7 @@ function logintoboggan_form_alter($form_id, &$form) {
           $form['name']['#description'] = t('Enter your %s username. e-mail address, or an ID from one of our affiliates: %a.', array('%s' => variable_get('site_name', 'local'), '%a' => implode(', ', user_auth_help_links())));
         }
         if($GLOBALS['logintoboggan_denied'] == TRUE){
-          $form[] = array(
-            '#type' => 'hidden',
-            '#name' => 'destination',
-            '#value' => logintoboggan_destination(),
-          );
+          $form['#redirect'] = logintoboggan_destination();
         }
       }
 
@@ -613,21 +609,19 @@ function theme_lt_access_denied() {
 // with custom 403, drupal_get_destination() would return toboggan/denied
 // which would show 'Access Denied' after login... what good is that!?
 function logintoboggan_destination() {
-  global $base_url;
-  // Drupal has reset $_GET[q], so we need a workaround.
-  $full_path = 'http://'. $_SERVER['SERVER_NAME'] . request_uri();
-  if ($internal_path = substr($full_path, strlen($base_url . '/'))) {
+  // Drupal has reset $_GET[q], so we need a workaround. Start with home page,
+  // then try to determine the correct destination.
+  $destination = 'node';
+  if ($internal_path = substr(request_uri(), strlen(base_path()))) {
+
     $uriarray = explode('/', $internal_path);
     if (!variable_get('clean_url', 0)) {
       $uriarray[0] = str_replace('?q=', '', $uriarray[0]);
     }
     $destination = implode('/', $uriarray);
+
   }
-  else {
-    // can't get uri?
-    // so we'll fallback to user account page
-    $destination = 'user';
-  }
+
   return $destination;
 }
 
