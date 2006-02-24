@@ -223,7 +223,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   watchdog('user', t('New user: %name %email.', array('%name' => theme('placeholder', $name), '%email' => theme('placeholder', '<'. $mail .'>'))), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
 
   $login_url = $reg_pass_set ? logintoboggan_eml_validate_url($account) : user_pass_reset_url($account);
-  $variables = array('%username' => $name, '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen('http://')), '%mailto' => $mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => $login_url);
+  $variables = array('%username' => $name, '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '%mailto' => $mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => $login_url);
 
   // The first user may login immediately, and receives a customized welcome e-mail.
   if ($account->uid == 1) {
@@ -752,7 +752,7 @@ function logintoboggan_resend_validation($uid) {
 
   // Variables to replace in e-mail
   $pass = t('If required, you may reset your password from: %url', array('%url' => url('user/password', NULL, NULL, TRUE)));
-  $variables = array('%username' => $account->name, '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen('http://')), '%mailto' => $account->mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => logintoboggan_eml_validate_url($account));
+  $variables = array('%username' => $account->name, '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '%mailto' => $account->mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => logintoboggan_eml_validate_url($account));
 
   // Prepare and send e-mail.
   $from = variable_get('site_mail', ini_get('sendmail_from'));
@@ -763,4 +763,8 @@ function logintoboggan_resend_validation($uid) {
   // Notify user that e-mail was sent and return to user edit form.
   drupal_set_message(t('A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
   drupal_goto('user/'. $account->uid .'/edit');
+}
+
+function _logintoboggan_protocol() {
+  return (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http'); 
 }
