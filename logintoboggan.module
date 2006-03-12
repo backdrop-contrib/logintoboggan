@@ -207,7 +207,9 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   }
 
   // Must unset password confirmation to prevent it from being saved in the user table's 'data' field
+  // While we're at it, unset mail confirmation, too
   if (isset($form_values['conf_pass'])) { unset($form_values['conf_pass']); }
+  if (isset($form_values['conf_mail'])) { unset($form_values['conf_mail']); }
 
   $from = variable_get('site_mail', ini_get('sendmail_from'));
 
