@@ -206,6 +206,9 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
     $pass = user_password();
   }
 
+  // Must unset password confirmation to prevent it from being saved in the user table's 'data' field
+  if (isset($form_values['conf_pass'])) { unset($form_values['conf_pass']); }
+
   $from = variable_get('site_mail', ini_get('sendmail_from'));
 
   if (!$admin && array_intersect(array_keys($form_values), array('uid', 'roles', 'init', 'session', 'status'))) {
@@ -766,5 +769,5 @@ function logintoboggan_resend_validation($uid) {
 }
 
 function _logintoboggan_protocol() {
-  return (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http'); 
+  return (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http');
 }
