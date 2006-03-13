@@ -616,7 +616,7 @@ function theme_lt_access_denied() {
 function logintoboggan_destination() {
   // Drupal has reset $_GET[q], so we need a workaround. Start with home page,
   // then try to determine the correct destination.
-  $destination = 'node';
+  $destination = variable_get('site_frontpage', 'node');
   if ($internal_path = substr(request_uri(), strlen(base_path()))) {
 
     $uriarray = explode('/', $internal_path);
