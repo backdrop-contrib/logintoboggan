@@ -1,0 +1,34 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_update_1().  This is a placeholder in case table
+ * installation is ever necessary for the module.
+ */
+function logintoboggan_update_1() {
+
+}
+
+/**
+ * Implementation of hook_update_2()
+ */
+function logintoboggan_update_2() {
+  // get all serialized user data.
+  $users = db_query('SELECT uid, data FROM {users}');
+  while($user = db_fetch_object($users)) {
+    $data = unserialize($user->data);
+    $updated_data = array();
+    // Extract conf_mail and conf_pass from the user's data
+    if (is_array($data)) {
+      foreach($data as $key => $value) {
+        if (!in_array($key, array('conf_mail', 'conf_pass'))) {
+          $updated_data[$key] = $value;
+        }
+      }
+      // reinsert the cleaned data for the user
+      $updated_data = db_escape_string(serialize($updated_data));
+      $ret[] = update_sql("UPDATE {users} SET data = '$updated_data' WHERE uid = $user->uid");
+    }
+  }
+  return $ret;
+}
