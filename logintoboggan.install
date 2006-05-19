@@ -27,8 +27,10 @@ function logintoboggan_update_2() {
       }
       // reinsert the cleaned data for the user
       $updated_data = db_escape_string(serialize($updated_data));
-      $ret[] = update_sql("UPDATE {users} SET data = '$updated_data' WHERE uid = $user->uid");
+      db_query("UPDATE {users} SET data = '%s' WHERE uid = %d", $updated_data, $user->uid);
     }
   }
+
+  drupal_set_message(t('logintoboggan cleaning of user data successful'));
   return $ret;
 }
