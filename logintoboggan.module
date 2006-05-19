@@ -223,7 +223,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   // Set validating id
   $validating_id = $reg_pass_set ? logintoboggan_validating_id() : $DRUPAL_AUTHENTICATED_RID;
 
-  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => array($validating_id), 'status' => $admin || variable_get('user_register', 1))));
+  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => array($validating_id), 'status' => ($admin || variable_get('user_register', 1) == 1))));
 
   watchdog('user', t('New user: %name %email.', array('%name' => theme('placeholder', $name), '%email' => theme('placeholder', '<'. $mail .'>'))), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
 
