@@ -121,9 +121,9 @@ function logintoboggan_form_alter($form_id, &$form) {
     case 'user_login_block':
       if (variable_get('login_with_mail', 0)) {
         $form['#validate'] = array('logintoboggan_user_login_validate' => array());
-        $form['name']['#title'] = t('Username or e-mail Address');
+        $form['name']['#title'] = t('Username or e-mail address');
         if (count(user_auth_help_links()) > 0) {
-          $form['name']['#description'] = t('Enter your %s username. e-mail address, or an ID from one of our affiliates: %a.', array('%s' => variable_get('site_name', 'local'), '%a' => implode(', ', user_auth_help_links())));
+          $form['name']['#description'] = t('Enter your %s username, e-mail address, or an ID from one of our affiliates: %a.', array('%s' => variable_get('site_name', 'local'), '%a' => implode(', ', user_auth_help_links())));
         }
         if($GLOBALS['logintoboggan_denied'] == TRUE){
           $form['#redirect'] = logintoboggan_destination();
@@ -221,7 +221,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   $reg_pass_set = variable_get('reg_passwd_set', 0);
 
   // Set validating id
-  $validating_id = $reg_pass_set ? logintoboggan_validating_id() : $DRUPAL_AUTHENTICATED_RID;
+  $validating_id = $reg_pass_set ? logintoboggan_validating_id() : DRUPAL_AUTHENTICATED_RID;
 
   $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => array($validating_id), 'status' => ($admin || variable_get('user_register', 1) == 1))));
 
@@ -679,7 +679,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass) {
       // Update the user table noting user has logged in.
       // And this also makes this hashed password a one-time-only login.
       db_query("UPDATE {users} SET login = '%d' WHERE uid = %d", time(), $account->uid);
-      db_query("UPDATE {users_roles} SET rid ='%d' WHERE uid = %d AND rid = %d", $DRUPAL_AUTHENTICATED_RID, $account->uid, logintoboggan_validating_id());
+      db_query("UPDATE {users_roles} SET rid = %d WHERE uid = %d AND rid = %d", DRUPAL_AUTHENTICATED_RID, $account->uid, logintoboggan_validating_id());
 
       // Now we can set the new user.
       $user = $account;
@@ -710,7 +710,8 @@ function logintoboggan_process_login($account){
 
   // user has new permissions, so we clear their menu cache
   cache_clear_all('menu:'. $user->uid, TRUE);
-
+  
+  $edit = array();
   user_module_invoke('login', $edit, $user);
 
   drupal_goto('user/'. $user->uid);
