@@ -313,8 +313,8 @@ function logintoboggan_user_login_validate($form_id, $form_values) {
 function logintoboggan_user_register_validate($form_id, $form_values) {
   if (variable_get('login_with_mail', 0)) {
     // check that it's not an e-mail
-    if (valid_email_address($form_values['name'])) {
-      form_set_error('name', t('You may not use an e-mail address as your username.'));
+    if (db_num_rows(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s')", $form_values['name'])) > 0) {
+      form_set_error('name', t('This e-mail address has already been taken by another user.'));
     }
   }
 
