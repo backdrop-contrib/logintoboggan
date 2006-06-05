@@ -122,7 +122,7 @@ function logintoboggan_form_alter($form_id, &$form) {
       if (variable_get('login_with_mail', 0)) {
         $form['#validate'] = array('logintoboggan_user_login_validate' => array());
         $form['name']['#title'] = t('Username or e-mail address');
-        if (count(user_auth_help_links()) > 0) {
+        if (variable_get('drupal_authentication_service', FALSE) && count(user_auth_help_links()) > 0) {
           $form['name']['#description'] = t('Enter your %s username, e-mail address, or an ID from one of our affiliates: %a.', array('%s' => variable_get('site_name', 'local'), '%a' => implode(', ', user_auth_help_links())));
         }
         if($GLOBALS['logintoboggan_denied'] == TRUE){
@@ -710,7 +710,7 @@ function logintoboggan_process_login($account){
 
   // user has new permissions, so we clear their menu cache
   cache_clear_all('menu:'. $user->uid, TRUE);
-  
+
   $edit = array();
   user_module_invoke('login', $edit, $user);
 
