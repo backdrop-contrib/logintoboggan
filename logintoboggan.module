@@ -248,20 +248,25 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
       $subject = _user_mail_text('welcome_subject', $variables);
       $body = _user_mail_text('welcome_body', $variables);
       user_mail($mail, $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+
+      // where do we need to redirect after registration?
+      $redirect = variable_get('toboggan_redirect_on_register', '');
+
       if(variable_get('reg_passwd_set', 0)) {
         if (variable_get('reg_passwd_set', 0) == 2){
           drupal_set_message(t('A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
-          logintoboggan_process_login($account);
+          logintoboggan_process_login($account, $redirect);
         }
           drupal_set_message(t('A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
-
-          drupal_goto();
       }
       else {
         drupal_set_message(t('Your password and further instructions have been sent to your e-mail address.'));
-
-        drupal_goto();
       }
+
+      if ($redirect != '') {
+        drupal_goto($redirect);
+      }
+      drupal_goto();
     }
     else {
       // Create new user account, administrator approval required.
@@ -540,6 +545,27 @@ function logintoboggan_settings() {
     '#description' => t('If either "Set password during registration" or "Immediate login" is selected, users will be able to login before their e-mail address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the "authenticated user" once they follow the link in their welcome e-mail. Add new roles <a href="%url">here</a>.', array('%url' => url('admin/access/roles'))),
     );
 
+  $form['registration']['redirect'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Redirections'),
+    '#collapsible' => true,
+    '#collapsed' => false,
+  );
+
+  $form['registration']['redirect']['toboggan_redirect_on_register'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Redirect path on Registration'),
+    '#default_value' => variable_get('toboggan_redirect_on_register', ''),
+    '#description' => t('Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page.'),
+  );
+
+  $form['registration']['redirect']['toboggan_redirect_on_confirm'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Redirect path on Confirmation'),
+    '#default_value' => variable_get('toboggan_redirect_on_confirm', ''),
+    '#description' => t('Normally, after a user confirms their new account, they will be taken to their user page. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page.'),
+  );
+
   $form['other'] = array('#type' => 'fieldset',
     '#title' => t('Other'),
     '#tree' => FALSE,
@@ -683,9 +709,13 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass) {
 
       // Now we can set the new user.
       $user = $account;
+
+      // Where do we redirect after confirming the account?
+      $redirect = variable_get('toboggan_redirect_on_confirm', '');
+
       // And proceed with normal login, going to user page.
       drupal_set_message(t("You have successfully validated your e-mail address."));
-      logintoboggan_process_login($user);
+      logintoboggan_process_login($user, $redirect);
     }
   }
   // Deny access, no more clues.
@@ -699,7 +729,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass) {
  * @param object $account
  */
 
-function logintoboggan_process_login($account){
+function logintoboggan_process_login($account, $redirect = ''){
   global $user;
   $user = $account;
 
@@ -713,6 +743,10 @@ function logintoboggan_process_login($account){
 
   $edit = array();
   user_module_invoke('login', $edit, $user);
+
+  if ($redirect != '') {
+    drupal_goto($redirect);
+  }
 
   drupal_goto('user/'. $user->uid);
  }
