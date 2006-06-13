@@ -173,6 +173,7 @@ function logintoboggan_form_alter($form_id, &$form) {
 
         // Have to put these in the login form group if it's been created
         if (isset($form['account'])) {
+          unset($form['account']['pass']);  // We have to do this here b/c it already exists, and will foul up the form field order if we don't.
           $form['account']['conf_mail'] = $form['conf_mail'];
           $form['account']['pass'] = $form['pass'];
           $form['account']['conf_pass'] = $form['conf_pass'];
