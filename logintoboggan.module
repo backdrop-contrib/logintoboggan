@@ -557,7 +557,7 @@ function logintoboggan_settings() {
     '#type' => 'textfield',
     '#title' => t('Redirect path on Registration'),
     '#default_value' => variable_get('toboggan_redirect_on_register', ''),
-    '#description' => t('Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page.'),
+    '#description' => t('Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. <em>Note: this feature will not work if you have the user password creation feature disabled.</em>'),
   );
 
   $form['registration']['redirect']['toboggan_redirect_on_confirm'] = array(
