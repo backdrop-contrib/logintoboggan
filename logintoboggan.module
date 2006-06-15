@@ -70,7 +70,7 @@ Drupal ID: %username@%uri_brief
         '#default_value' => $example,
         '#rows' => 15,
       );
-      $output = drupal_get_form('logintoboggan_help', $form);
+      $output .= drupal_get_form('logintoboggan_help', $form);
       return $output;
       break;
     case 'admin/modules#description':
