@@ -42,9 +42,10 @@ function logintoboggan_help($section) {
       <li>Provide a login form on Access Denied pages for non-logged-in (anonymous) users.</li>
       <li>The module provides two login block options: One uses JavaScript to display the form within the block immediately upon clicking "log in". The other brings the user to a separate page, but returns the user to their original page upon login.</li>
       <li>Customize the registration form with two e-mail fields to ensure accuracy.</li>
+      <li>Optionally redirect the user to a specific page when using the \'immediate login\' feature.</li>
+      <li>Optionally redirect the user to a specific page upon validation of their e-mail address.</li>
       </ol>
       These features may be turned on or off in the Login Toboggan <a href="%url">settings</a>.</p>
-      <p>Feel funny about people logging in at "http://yoursite.com/toboggan/login"? (Yes, we know it\'s a silly name.) You can use the path.module\'s "url aliases" to redefine Login Toboggan\'s paths as something else (perhaps: "usr/login" or just "login").</p>
       <p>Because this module completely reorients the Drupal login process you will probably want to edit the welcome e-mail on the user settings page. For instance if you have enabled "Set passwords during registration" you probably should not send the user\'s password out in the welcome e-mail. Also when either "Set passwords during registration" or "Immediate login" are enabled, the %login_url becomes a verification url that the user MUST visit in order to enable authenticated status. The following is an example welcome e-mail:</p>
       ', array('%url' => url('admin/settings/logintoboggan')));
       $example = t('
