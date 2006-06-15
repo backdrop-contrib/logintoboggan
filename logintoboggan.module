@@ -344,6 +344,23 @@ function logintoboggan_user_register_validate($form_id, $form_values) {
 }
 
 /**
+ * Implementation of hook_init()
+ *
+ * @ingroup logintoboggan_core
+ */
+function logintoboggan_init() {
+
+  global $user;
+
+  // If it's not an anonymous user, and the user has the pre-auth role, and the pre-auth role
+  // isn't also the auth role, then unset the auth role for this user--they haven't validated yet.
+  $id = logintoboggan_validating_id();
+  if ($user->uid && in_array($id, array_keys($user->roles)) && $id != 2) {
+    unset($user->roles[2]);
+  }
+}
+
+/**
  * Implementation of hook_menu()
  *
  * @ingroup logintoboggan_core
@@ -706,7 +723,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass) {
       // Update the user table noting user has logged in.
       // And this also makes this hashed password a one-time-only login.
       db_query("UPDATE {users} SET login = '%d' WHERE uid = %d", time(), $account->uid);
-      db_query("UPDATE {users_roles} SET rid = %d WHERE uid = %d AND rid = %d", DRUPAL_AUTHENTICATED_RID, $account->uid, logintoboggan_validating_id());
+      db_query("DELETE FROM {users_roles} WHERE uid = %d AND rid = %d", $account->uid, logintoboggan_validating_id());
 
       // Now we can set the new user.
       $user = $account;
