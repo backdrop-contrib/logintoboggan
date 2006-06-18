@@ -34,3 +34,13 @@ function logintoboggan_update_2() {
   drupal_set_message(t('logintoboggan cleaning of user data successful'));
   return $ret;
 }
+
+/**
+ * Implementation of hook_update_3()
+ */
+function logintoboggan_update_3() {
+
+  if (variable_get('reg_passwd_set', 0) == 2) {
+    variable_set('reg_passwd_set', 1);
+  }
+}

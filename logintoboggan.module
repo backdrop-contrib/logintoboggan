@@ -143,6 +143,7 @@ function logintoboggan_form_alter($form_id, &$form) {
       if (!user_access('administer users') && ($mail || $pass)) {
         $form['#validate'] += array('logintoboggan_user_register_validate' => array());
         $form['#submit'] = array('logintoboggan_user_register_submit' => array($form_id, &$form_values));
+
         //Display a confirm e-mail address box if option is enabled.
         if ($mail) {
           $form['conf_mail'] = array('#type' => 'textfield',
@@ -240,45 +241,55 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
     drupal_goto('user/1/edit');
   }
   else {
-    if ($admin) {
-      drupal_set_message(t('Created a new user account. No e-mail has been sent.'));
+    // where do we need to redirect after registration?
+    $redirect = variable_get('toboggan_redirect_on_register', '');
 
-      drupal_goto('admin/user');
+    if ($admin) {
+      $message = t('Created a new user account. No e-mail has been sent.');
+
+      $redirect = 'admin/user';
     }
     else if ($account->status) {
+
       // Create new user account, no administrator approval required.
       $subject = _user_mail_text('welcome_subject', $variables);
       $body = _user_mail_text('welcome_body', $variables);
-      user_mail($mail, $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
-
-      // where do we need to redirect after registration?
-      $redirect = variable_get('toboggan_redirect_on_register', '');
 
       if(variable_get('reg_passwd_set', 0)) {
-        if (variable_get('reg_passwd_set', 0) == 2){
-          drupal_set_message(t('A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
-          logintoboggan_process_login($account, $redirect);
-        }
-          drupal_set_message(t('A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
-      }
-      else {
-        drupal_set_message(t('Your password and further instructions have been sent to your e-mail address.'));
+        $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
+
+      } else {
+        $message = t('Your password and further instructions have been sent to your e-mail address.');
       }
 
-      if ($redirect != '') {
-        drupal_goto($redirect);
-      }
-      drupal_goto();
-    }
-    else {
+
+
+    } else {
       // Create new user account, administrator approval required.
       $subject = _user_mail_text('approval_subject', $variables);
       $body = _user_mail_text('approval_body', $variables);
 
-      user_mail($mail, $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
-      user_mail(variable_get('site_mail', ini_get('sendmail_from')), $subject, t("%u has applied for an account.\n\n%uri", array('%u' => $account->name, '%uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
-      drupal_set_message(t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />In the meantime, your password and further instructions have been sent to your e-mail address.'));
+      $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
 
+      user_mail(variable_get('site_mail', ini_get('sendmail_from')), $subject, t("%u has applied for an account.\n\n%uri", array('%u' => $account->name, '%uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+
+    }
+
+    //mail the user if necessary
+    if (isset($subject)) {
+      user_mail($mail, $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+    }
+    drupal_set_message($message);
+
+    //log the user in if they created the account and immediate login is enabled.
+    if(variable_get('reg_passwd_set', 0) && !$admin) {
+      logintoboggan_process_login($account, $redirect);
+    }
+
+    //redirect to the appropriate page.
+    if ($redirect != '') {
+      drupal_goto($redirect);
+    } else {
       drupal_goto();
     }
   }
@@ -553,15 +564,15 @@ function logintoboggan_settings() {
   $form['registration']['reg_passwd_set'] = array('#type' => 'radios',
     '#title' => t('Allow user to set their password during registration'),
     '#default_value' => variable_get('reg_passwd_set', 0),
-    '#options' => array(t('Disabled'), t('Set Password'), t('Set password & Immediate login')),
-    '#description' => t('This will allow users to choose their initial password when registering.  If \'Set password & Immediate login\' is selected, users will be assigned to the role below and logged in immediately. They will not be assigned to the "athenticated user" role until they confirm their e-mail address by following the link in their registration e-mail. It is HIGHLY recommended that you set up a "pre-authorized" role with limited permissions for this purpose. <br />NOTE: If you enable either of these features, you should edit the %settings--more help in writing the e-mail message can be found %help.', array('%settings' => l('user e-mail welcome message', 'admin/settings/user'), '%help' => l('logintoboggan help', 'admin/help/logintoboggan'))),
+    '#options' => array(t('Disabled'), t('Set password & Immediate login')),
+    '#description' => t('This will allow users to choose their initial password when registering.  If \'Set password & Immediate login\' is selected, users will be assigned to the role below and logged in immediately. They will not be assigned to the "athenticated user" role until they confirm their e-mail address by following the link in their registration e-mail. It is HIGHLY recommended that you set up a "pre-authorized" role with limited permissions for this purpose. <br />NOTE: If you enable either of this feature, you should edit the %settings--more help in writing the e-mail message can be found %help.', array('%settings' => l('user e-mail welcome message', 'admin/settings/user'), '%help' => l('logintoboggan help', 'admin/help/logintoboggan'))),
     );
 
   $form ['registration']['toboggan_role'] = array('#type' => 'select',
     '#title' => t('Non-authenticated role'),
     '#options' => user_roles(),
     '#default_value' => variable_get('toboggan_role', 1),
-    '#description' => t('If either "Set password during registration" or "Immediate login" is selected, users will be able to login before their e-mail address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the "authenticated user" once they follow the link in their welcome e-mail. Add new roles <a href="%url">here</a>.', array('%url' => url('admin/access/roles'))),
+    '#description' => t('If "Set password & Immediate login" is selected, users will be able to login before their e-mail address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the "authenticated user" once they follow the link in their welcome e-mail. Add new roles <a href="%url">here</a>.', array('%url' => url('admin/access/roles'))),
     );
 
   $form['registration']['redirect'] = array(
@@ -790,7 +801,7 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
   global $user;
   if ($op == 'form' && $category == 'account' && $user->uid == arg(1)) {
     // User is editing their own account settings
-    if (variable_get('reg_passwd_set', 0) == 2 && array_key_exists(logintoboggan_validating_id(), $user_edit->roles)) {
+    if (variable_get('reg_passwd_set', 0) && array_key_exists(logintoboggan_validating_id(), $user_edit->roles)) {
       // User is still in pre-authorized role; display link to re-send e-mail.
       $form['revalidate'] = array(
         '#type' => 'fieldset',
