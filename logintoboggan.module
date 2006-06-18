@@ -196,13 +196,14 @@ function logintoboggan_form_alter($form_id, &$form) {
 function logintoboggan_user_register_submit($form_id, $form_values) {
   global $base_url;
 
-  $admin = user_access('administer users');
-
   $mail = $form_values['mail'];
   $name = $form_values['name'];
+  $from = variable_get('site_mail', ini_get('sendmail_from'));
+  $notify = $form_values['notify'];
+  $reg_pass_set = variable_get('reg_passwd_set', 0);
 
   //If we are allowing user selected passwords then skip the auto-generate function
-  if (variable_get('reg_passwd_set', 0) || $admin) {
+  if (variable_get('reg_passwd_set', 0)) {
     $pass = $form_values['pass'];
   }
   else {
@@ -214,84 +215,64 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   if (isset($form_values['conf_pass'])) { unset($form_values['conf_pass']); }
   if (isset($form_values['conf_mail'])) { unset($form_values['conf_mail']); }
 
-  $from = variable_get('site_mail', ini_get('sendmail_from'));
-
-  if (!$admin && array_intersect(array_keys($form_values), array('uid', 'roles', 'init', 'session', 'status'))) {
+  if (array_intersect(array_keys($form_values), array('uid', 'roles', 'init', 'session', 'status'))) {
     watchdog('security', t('Detected malicious attempt to alter protected user fields.'), WATCHDOG_WARNING);
     drupal_goto('user/register');
   }
 
-  $reg_pass_set = variable_get('reg_passwd_set', 0);
-
   // Set validating id
   $validating_id = $reg_pass_set ? logintoboggan_validating_id() : DRUPAL_AUTHENTICATED_RID;
 
-  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => array($validating_id), 'status' => ($admin || variable_get('user_register', 1) == 1))));
+  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => array($validating_id), 'status' => variable_get('user_register', 1) == 1)));
 
   watchdog('user', t('New user: %name %email.', array('%name' => theme('placeholder', $name), '%email' => theme('placeholder', '<'. $mail .'>'))), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
 
   $login_url = $reg_pass_set ? logintoboggan_eml_validate_url($account) : user_pass_reset_url($account);
   $variables = array('%username' => $name, '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '%mailto' => $mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => $login_url);
 
-  // The first user may login immediately, and receives a customized welcome e-mail.
-  if ($account->uid == 1) {
-    user_mail($mail, t('drupal user account details for %s', array('%s' => $name)), strtr(t("%username,\n\nYou may now login to %uri using the following username and password:\n\n  username: %username\n  password: %password\n\n%edit_uri\n\n--drupal"), $variables), "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
-    drupal_set_message(t('<p>Welcome to Drupal. You are user #1, which gives you full and immediate access.  All future registrants will receive their passwords via e-mail, so please make sure your website e-mail address is set properly under the general settings on the <a href="%settings">settings page</a>.</p><p> Your password is <strong>%pass</strong>. You may change your password below.</p>', array('%pass' => $pass, '%settings' => url('admin/settings'))));
-    user_authenticate($account->name, trim($pass));
-    drupal_goto('user/1/edit');
+  if ($account->status) {
+
+    // Create new user account, no administrator approval required.
+    $subject = _user_mail_text('welcome_subject', $variables);
+    $body = _user_mail_text('welcome_body', $variables);
+
+    if(variable_get('reg_passwd_set', 0)) {
+      $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
+
+    } else {
+      $message = t('Your password and further instructions have been sent to your e-mail address.');
+    }
+
+  } else {
+
+    // Create new user account, administrator approval required.
+    $subject = _user_mail_text('approval_subject', $variables);
+    $body = _user_mail_text('approval_body', $variables);
+
+    $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
+
+    user_mail(variable_get('site_mail', ini_get('sendmail_from')), $subject, t("%u has applied for an account.\n\n%uri", array('%u' => $account->name, '%uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+
   }
-  else {
-    // where do we need to redirect after registration?
-    $redirect = variable_get('toboggan_redirect_on_register', '');
 
-    if ($admin) {
-      $message = t('Created a new user account. No e-mail has been sent.');
+  //mail the user.
+  user_mail($mail, $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
 
-      $redirect = 'admin/user';
-    }
-    else if ($account->status) {
+  drupal_set_message($message);
 
-      // Create new user account, no administrator approval required.
-      $subject = _user_mail_text('welcome_subject', $variables);
-      $body = _user_mail_text('welcome_body', $variables);
+  // where do we need to redirect after registration?
+  $redirect = variable_get('toboggan_redirect_on_register', '');
 
-      if(variable_get('reg_passwd_set', 0)) {
-        $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
+  //log the user in if they created the account and immediate login is enabled.
+  if(variable_get('reg_passwd_set', 0)) {
+    logintoboggan_process_login($account, $redirect);
+  }
 
-      } else {
-        $message = t('Your password and further instructions have been sent to your e-mail address.');
-      }
-
-
-
-    } else {
-      // Create new user account, administrator approval required.
-      $subject = _user_mail_text('approval_subject', $variables);
-      $body = _user_mail_text('approval_body', $variables);
-
-      $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
-
-      user_mail(variable_get('site_mail', ini_get('sendmail_from')), $subject, t("%u has applied for an account.\n\n%uri", array('%u' => $account->name, '%uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
-
-    }
-
-    //mail the user if necessary
-    if (isset($subject)) {
-      user_mail($mail, $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
-    }
-    drupal_set_message($message);
-
-    //log the user in if they created the account and immediate login is enabled.
-    if(variable_get('reg_passwd_set', 0) && !$admin) {
-      logintoboggan_process_login($account, $redirect);
-    }
-
-    //redirect to the appropriate page.
-    if ($redirect != '') {
-      drupal_goto($redirect);
-    } else {
-      drupal_goto();
-    }
+  //redirect to the appropriate page.
+  if ($redirect != '') {
+    drupal_goto($redirect);
+  } else {
+    drupal_goto();
   }
 }
 
