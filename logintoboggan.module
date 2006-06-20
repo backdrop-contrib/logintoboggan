@@ -132,6 +132,9 @@ function logintoboggan_form_alter($form_id, &$form) {
       if (variable_get('login_with_mail', 0)) {
         $form['#validate'] = array('logintoboggan_user_login_validate' => array());
         $form['name']['#title'] = t('Username or e-mail address');
+        $form['name']['#attributes'] = array('tabindex' => '1');
+        $form['pass']['#attributes'] = array('tabindex' => '2');
+        $form['submit']['#attributes'] = array('tabindex' => '3');
         if (variable_get('drupal_authentication_service', FALSE) && count(user_auth_help_links()) > 0) {
           $form['name']['#description'] = t('Enter your %s username, e-mail address, or an ID from one of our affiliates: %a.', array('%s' => variable_get('site_name', 'local'), '%a' => implode(', ', user_auth_help_links())));
         }
