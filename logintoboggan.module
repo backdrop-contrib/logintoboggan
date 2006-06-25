@@ -756,7 +756,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass) {
       $awaiting_approval = $account->status ? '' : t(' You will receive full site permissions after your account has been approved by a site administrator.');
 
       // And proceed with normal login, going to user page.
-      drupal_set_message(t('You have successfully validated your e-mail address.'. $awaiting_approval));
+      drupal_set_message(t('You have successfully validated your e-mail address.') . $awaiting_approval);
       logintoboggan_process_login($user, $redirect);
     }
     else {
