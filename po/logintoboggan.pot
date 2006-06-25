@@ -1,12 +1,12 @@
-# LANGUAGE translation of Drupal (/Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module)
+# LANGUAGE translation of Drupal (../logintoboggan.module)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
-# Generated from file: logintoboggan.module,v 1.19 2006/03/13 22:48:23 thehunmonkgroup
+# Generated from file: logintoboggan.module,v 1.37 2006/06/25 21:54:14 thehunmonkgroup
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2006-03-13 18:30-0700\n"
+"POT-Creation-Date: 2006-06-25 15:56-0600\n"
 "PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
@@ -15,311 +15,347 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:37
-msgid "<p>The Login Toboggan module improves the Drupal login system by offering the following features:\n      <ol>\n      <li>Allow users to login using either their username OR their e-mail address.</li>\n      <li>Allow users to define their own password.</li>\n      <li>Allow users to login immediately.</li>\n      <li>Provide a login form on Access Denied pages for non-logged-in (anonymous) users.</li>\n      <li>The module provides two login block options: One uses JavaScript to display the form within the block immediately upon clicking \"log in\". The other brings the user to a separate page, but returns the user to their original page upon login.</li>\n      <li>Customize the registration form with two e-mail fields to ensure accuracy.</li>\n      </ol>\n      These features may be turned on or off in the Login Toboggan <a href=\"%url\">settings</a>.</p>\n      <p>Feel funny about people logging in at \"http://yoursite.com/toboggan/login\"? (Yes, we know it's a silly name.) You can use the path.module's \"url aliases\" to redefine Login Toboggan's paths as something else (perhaps: \"usr/login\" or just \"login\").</p>\n      <p>Because this module completely reorients the Drupal login process you will probably want to edit the welcome e-mail on the user settings page. For instance if you have enabled \"Set passwords during registration\" you probably should not send the user's password out in the welcome e-mail. Also when either \"Set passwords during registration\" or \"Immediate login\" are enabled, the %login_url becomes a verification url that the user MUST visit in order to enable authenticated status. The following is an example welcome e-mail:</p>\n      "
+#: ../logintoboggan.module:37
+msgid "<p>The Login Toboggan module improves the Drupal login system by offering the following features:\n      <ol>\n      <li>Allow users to login using either their username OR their e-mail address.</li>\n      <li>Allow users to define their own password.</li>\n      <li>Allow users to login immediately.</li>\n      <li>Provide a login form on Access Denied pages for non-logged-in (anonymous) users.</li>\n      <li>The module provides two login block options: One uses JavaScript to display the form within the block immediately upon clicking \"log in\". The other brings the user to a separate page, but returns the user to their original page upon login.</li>\n      <li>Customize the registration form with two e-mail fields to ensure accuracy.</li>\n      <li>Optionally redirect the user to a specific page when using the 'immediate login' feature.</li>\n      <li>Optionally redirect the user to a specific page upon validation of their e-mail address.</li>\n      </ol>\n      These features may be turned on or off in the Login Toboggan <a href=\"%url\">settings</a>.</p>\n      <p>Because this module completely reorients the Drupal login process you will probably want to edit the welcome e-mail on the user settings page. For instance if you have enabled the \"Set password & Immediate Login\" option, you probably should not send the user's password out in the welcome e-mail (also note when the \"Set password & Immediate Login\" option is enabled, the %login_url becomes a verification url that the user MUST visit in order to enable authenticated status). The following is an example welcome e-mail:</p>\n      "
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:50
+#: ../logintoboggan.module:51
 msgid "\n%username,\n\nThank you for registering at %site.\n\nIMPORTANT:\nFor full site access, you will need to click on this link or copy and paste it in your browser:\n\n%login_url\n\nThis will verify your account and log you into the site. In the future you will be able to log in using the username and password that you created during registration.\n\nYour new %site membership also enables to you to login to other Drupal powered websites (e.g. http://www.drupal.org/) without registering. Just use the following Drupal ID along with the password you've chosen:\n\nDrupal ID: %username@%uri_brief\n\n\n--  %site team"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:77
+#: ../logintoboggan.module:75
+msgid "<p>Note that if you have set the \"Visitors can create accounts but administrator approval is required\" option for account approval, and are also using the \"Set password & Immediate Login\" feature of logintoboggan, the user will immediately receive the permissions of the pre-authorized user role--you may wish to set the pre-authorized role to \"anonymous user\" if you wish the newly created user to only have anonymous permissions.</p><p>When a site administrator unblocks a user who is awaiting administrator approval, they must also manually remove the user from the site's pre-authorized role in order for the user to receive \"authenticated user\" permissions (if you are using the \"Visitors can create accounts and no administrator approval is required\" option, removal of the pre-authorized role will happen automatically).</p><p>Also be aware that logintoboggan only affects registrations initiated by users--any user account created by an administrator will not use any logintoboggan functionality."
+msgstr ""
+
+#: ../logintoboggan.module:79
 msgid "Improves Drupal's login system."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:80
+#: ../logintoboggan.module:82
 msgid "<p>Customize your login and registration system. More help can be found <a href=\"%url\">here</a>.</p>"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:124
-msgid "Username or e-mail Address"
+#: ../logintoboggan.module:127
+msgid "If this user was created using the \"Immediate Login\" feature of Logintoboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site's pre-authorized role in the \"Roles\" section below, or they will not receive the authenticated users permissions!"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:126
-msgid "Enter your %s username. e-mail address, or an ID from one of our affiliates: %a."
+#: ../logintoboggan.module:134
+msgid "Username or e-mail address"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:148
+#: ../logintoboggan.module:139
+msgid "Enter your %s username, e-mail address, or an ID from one of our affiliates: %a."
+msgstr ""
+
+#: ../logintoboggan.module:162
 msgid "Confirm e-mail address"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:151
+#: ../logintoboggan.module:165
 msgid "Please re-type your e-mail address to confirm it is accurate."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:159
+#: ../logintoboggan.module:173
 msgid "Password"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:162
+#: ../logintoboggan.module:176
 msgid "Please choose a password for your account; it must be between 6 and 30 characters and spaces are not allowed."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:166
+#: ../logintoboggan.module:180
 msgid "Confirm Password"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:169
+#: ../logintoboggan.module:183
 msgid "Please re-type your password to confirm it is accurate."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:217
+#: ../logintoboggan.module:231
 msgid "Detected malicious attempt to alter protected user fields."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:228
+#: ../logintoboggan.module:240
 msgid "New user: %name %email."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:228
+#: ../logintoboggan.module:240
 msgid "edit"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:235
-msgid "drupal user account details for %s"
+#: ../logintoboggan.module:247
+msgid "A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:235
-msgid "%username,\n\nYou may now login to %uri using the following username and password:\n\n  username: %username\n  password: %password\n\n%edit_uri\n\n--drupal"
-msgstr ""
-
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:236
-msgid "<p>Welcome to Drupal. You are user #1, which gives you full and immediate access.  All future registrants will receive their passwords via e-mail, so please make sure your website e-mail address is set properly under the general settings on the <a href=\"%settings\">settings page</a>.</p><p> Your password is <strong>%pass</strong>. You may change your password below.</p>"
-msgstr ""
-
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:242
-msgid "Created a new user account. No e-mail has been sent."
-msgstr ""
-
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:253;256;769
-msgid "A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site."
-msgstr ""
-
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:261
+#: ../logintoboggan.module:250
 msgid "Your password and further instructions have been sent to your e-mail address."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:272
+#: ../logintoboggan.module:265
+msgid "Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />"
+msgstr ""
+
+#: ../logintoboggan.module:267
 msgid "%u has applied for an account.\n\n%uri"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:273
-msgid "Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />In the meantime, your password and further instructions have been sent to your e-mail address."
-msgstr ""
-
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:289
+#: ../logintoboggan.module:301
 msgid "The username %name has been blocked."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:293
+#: ../logintoboggan.module:305
 msgid "The name %name is a reserved username."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:300
+#: ../logintoboggan.module:312
 msgid "Sorry. Unrecognized username or password."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:300
+#: ../logintoboggan.module:312
 msgid "Have you forgotten your password?"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:301
+#: ../logintoboggan.module:313
 msgid "Login attempt failed for %user: %error."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:317
-msgid "You may not use an e-mail address as your username."
+#: ../logintoboggan.module:329
+msgid "This e-mail address has already been taken by another user."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:324
+#: ../logintoboggan.module:336
 msgid "Your e-mail address and confirmed e-mail address must match."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:331
+#: ../logintoboggan.module:343
 msgid "Your password and confirmed password must match."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:352
+#: ../logintoboggan.module:385
 msgid "validate e-mail address"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:362
+#: ../logintoboggan.module:395
 msgid "access denied"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:370;743
+#: ../logintoboggan.module:403;824
 msgid "re-send validation e-mail"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:400
+#: ../logintoboggan.module:433
 msgid "LoginToboggan custom login"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:406
+#: ../logintoboggan.module:439
 msgid "Display the 'logged in' block"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:410
+#: ../logintoboggan.module:443
 msgid "Block type"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:412
+#: ../logintoboggan.module:445
 msgid "Link"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:412
+#: ../logintoboggan.module:445
 msgid "Collapsible Form"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:415
+#: ../logintoboggan.module:448
 msgid "Set a custom message to appear at the top of your login block"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:444;477
+#: ../logintoboggan.module:477;510
 msgid "Login/Register"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:463
+#: ../logintoboggan.module:496
 msgid "log out"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:507
+#: ../logintoboggan.module:540
 msgid "Login"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:512
+#: ../logintoboggan.module:545
 msgid "Allow users to login using their e-mail address"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:514;525;555
+#: ../logintoboggan.module:547;558;609;621
 msgid "disabled"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:514;525;555
+#: ../logintoboggan.module:547;558;609;621
 msgid "enabled"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:515
+#: ../logintoboggan.module:548
 msgid "Users will be able to enter EITHER their username OR their e-mail address to log in. note: This will disallow users from registering using an e-mail address as their username."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:519
+#: ../logintoboggan.module:552
 msgid "Registration"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:523
+#: ../logintoboggan.module:556
 msgid "Use two e-mail fields on registration form"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:526
+#: ../logintoboggan.module:559
 msgid "User will have to type the same e-mail address into both fields. This helps to confirm that they've typed the correct address."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:530
+#: ../logintoboggan.module:563
 msgid "Allow user to set their password during registration"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:532
+#: ../logintoboggan.module:565
 msgid "Disabled"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:532
-msgid "Set Password"
-msgstr ""
-
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:532
+#: ../logintoboggan.module:565
 msgid "Set password & Immediate login"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:533
-msgid "This will allow users to choose their initial password when registering.  If 'Set password & Immediate login' is selected, users will be assigned to the role below and logged in immediately. They will not be assigned to the \"athenticated user\" role until they confirm their e-mail address by following the link in their registration e-mail. It is HIGHLY recommended that you set up a \"pre-authorized\" role with limited permissions for this purpose. <br />NOTE: If you enable either of these features, you should edit the %settings--more help in writing the e-mail message can be found %help."
+#: ../logintoboggan.module:566
+msgid "This will allow users to choose their initial password when registering.  If 'Set password & Immediate login' is selected, users will be assigned to the role below and logged in immediately. They will not be assigned to the \"authenticated user\" role until they confirm their e-mail address by following the link in their registration e-mail. It is HIGHLY recommended that you set up a \"pre-authorized\" role with limited permissions for this purpose. <br />NOTE: If you enable either of this feature, you should edit the %settings--more help in writing the e-mail message can be found %help."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:537
+#: ../logintoboggan.module:570
 msgid "Non-authenticated role"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:540
-msgid "If either \"Set password during registration\" or \"Immediate login\" is selected, users will be able to login before their e-mail address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the \"authenticated user\" once they follow the link in their welcome e-mail. Add new roles <a href=\"%url\">here</a>."
+#: ../logintoboggan.module:573
+msgid "If \"Set password & Immediate login\" is selected, users will be able to login before their e-mail address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the \"authenticated user\" once they follow the link in their welcome e-mail. Add new roles <a href=\"%url\">here</a>."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:544
+#: ../logintoboggan.module:578
+msgid "Redirections"
+msgstr ""
+
+#: ../logintoboggan.module:585
+msgid "Redirect path on Registration"
+msgstr ""
+
+#: ../logintoboggan.module:587
+msgid "Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. <em>Note: this feature will not work if you have the user password creation feature disabled.</em>"
+msgstr ""
+
+#: ../logintoboggan.module:592
+msgid "Redirect path on Confirmation"
+msgstr ""
+
+#: ../logintoboggan.module:594
+msgid "Normally, after a user confirms their new account, they will be taken to their user page. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page."
+msgstr ""
+
+#: ../logintoboggan.module:598
 msgid "Other"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:559
+#: ../logintoboggan.module:613
 msgid "Present login form on access denied (403)"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:562
+#: ../logintoboggan.module:616
 msgid "Anonymous users will be presented with a login form along with an access denied message."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:592
+#: ../logintoboggan.module:620
+msgid "Display login successful message"
+msgstr ""
+
+#: ../logintoboggan.module:623
+msgid "If enabled, users will receive a 'Login successful' message upon login."
+msgstr ""
+
+#: ../logintoboggan.module:653
 msgid "Access Denied. You may need to log in to access this page."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:593
+#: ../logintoboggan.module:654
 msgid "Access Denied / User Login"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:595;602
+#: ../logintoboggan.module:656;663
 msgid "Access Denied"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:610
+#: ../logintoboggan.module:671
 msgid "You are not authorized to access this page."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:638
+#: ../logintoboggan.module:699
 msgid "You must enter a password."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:639
+#: ../logintoboggan.module:700
 msgid "The password cannot contain spaces."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:640;650
+#: ../logintoboggan.module:701;711
 msgid "The password contains an illegal character."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:652
+#: ../logintoboggan.module:713
 msgid "The password is too long: it must be less than 30 characters."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:653
+#: ../logintoboggan.module:714
 msgid "The password is too short: it must be greater than 6 characters."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:678
+#: ../logintoboggan.module:739
 msgid "E-mail validation URL used for %name with timestamp %timestamp."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:687
+#: ../logintoboggan.module:756
+msgid " You will receive full site permissions after your account has been approved by a site administrator."
+msgstr ""
+
+#: ../logintoboggan.module:759
 msgid "You have successfully validated your e-mail address."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:706
+#: ../logintoboggan.module:763
+msgid "Sorry, you can only use your validation link once for security reasons. Please %login with your username and password instead now."
+msgstr ""
+
+#: ../logintoboggan.module:763
+msgid "login"
+msgstr ""
+
+#: ../logintoboggan.module:782
 msgid "Session opened for %name."
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:739
+#: ../logintoboggan.module:820
 msgid "Account validation"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:759
+#: ../logintoboggan.module:829
+msgid "Login successful."
+msgstr ""
+
+#: ../logintoboggan.module:842
 msgid "If required, you may reset your password from: %url"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:217
+#: ../logintoboggan.module:852
+msgid "A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site."
+msgstr ""
+
+#: ../logintoboggan.module:231
 msgid "security"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:228;301;678;706
+#: ../logintoboggan.module:240;313;739;782
 msgid "user"
 msgstr ""
 
-#: /Users/hunmonk/drupal/contributions/modules/logintoboggan/logintoboggan.module:0
+#: ../logintoboggan.module:0
 msgid "logintoboggan"
 msgstr ""
 
