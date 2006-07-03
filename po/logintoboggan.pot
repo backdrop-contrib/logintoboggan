@@ -1,12 +1,12 @@
 # LANGUAGE translation of Drupal (../logintoboggan.module)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
-# Generated from file: logintoboggan.module,v 1.37 2006/06/25 21:54:14 thehunmonkgroup
+# Generated from file: logintoboggan.module,v 1.40 2006/07/03 19:52:34 thehunmonkgroup
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2006-06-25 15:56-0600\n"
+"POT-Creation-Date: 2006-07-03 14:00-0600\n"
 "PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
@@ -139,7 +139,7 @@ msgstr ""
 msgid "access denied"
 msgstr ""
 
-#: ../logintoboggan.module:403;824
+#: ../logintoboggan.module:403;826
 msgid "re-send validation e-mail"
 msgstr ""
 
@@ -271,79 +271,79 @@ msgstr ""
 msgid "If enabled, users will receive a 'Login successful' message upon login."
 msgstr ""
 
-#: ../logintoboggan.module:653
-msgid "Access Denied. You may need to log in to access this page."
-msgstr ""
-
-#: ../logintoboggan.module:654
+#: ../logintoboggan.module:661
 msgid "Access Denied / User Login"
 msgstr ""
 
-#: ../logintoboggan.module:656;663
+#: ../logintoboggan.module:662
+msgid "Access denied.  You may need to login below or register to access this page."
+msgstr ""
+
+#: ../logintoboggan.module:665
 msgid "Access Denied"
 msgstr ""
 
-#: ../logintoboggan.module:671
+#: ../logintoboggan.module:673
 msgid "You are not authorized to access this page."
 msgstr ""
 
-#: ../logintoboggan.module:699
+#: ../logintoboggan.module:701
 msgid "You must enter a password."
 msgstr ""
 
-#: ../logintoboggan.module:700
+#: ../logintoboggan.module:702
 msgid "The password cannot contain spaces."
 msgstr ""
 
-#: ../logintoboggan.module:701;711
+#: ../logintoboggan.module:703;713
 msgid "The password contains an illegal character."
 msgstr ""
 
-#: ../logintoboggan.module:713
+#: ../logintoboggan.module:715
 msgid "The password is too long: it must be less than 30 characters."
 msgstr ""
 
-#: ../logintoboggan.module:714
+#: ../logintoboggan.module:716
 msgid "The password is too short: it must be greater than 6 characters."
 msgstr ""
 
-#: ../logintoboggan.module:739
+#: ../logintoboggan.module:741
 msgid "E-mail validation URL used for %name with timestamp %timestamp."
 msgstr ""
 
-#: ../logintoboggan.module:756
+#: ../logintoboggan.module:758
 msgid " You will receive full site permissions after your account has been approved by a site administrator."
 msgstr ""
 
-#: ../logintoboggan.module:759
+#: ../logintoboggan.module:761
 msgid "You have successfully validated your e-mail address."
 msgstr ""
 
-#: ../logintoboggan.module:763
+#: ../logintoboggan.module:765
 msgid "Sorry, you can only use your validation link once for security reasons. Please %login with your username and password instead now."
 msgstr ""
 
-#: ../logintoboggan.module:763
+#: ../logintoboggan.module:765
 msgid "login"
 msgstr ""
 
-#: ../logintoboggan.module:782
+#: ../logintoboggan.module:784
 msgid "Session opened for %name."
 msgstr ""
 
-#: ../logintoboggan.module:820
+#: ../logintoboggan.module:822
 msgid "Account validation"
 msgstr ""
 
-#: ../logintoboggan.module:829
+#: ../logintoboggan.module:831
 msgid "Login successful."
 msgstr ""
 
-#: ../logintoboggan.module:842
+#: ../logintoboggan.module:844
 msgid "If required, you may reset your password from: %url"
 msgstr ""
 
-#: ../logintoboggan.module:852
+#: ../logintoboggan.module:854
 msgid "A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site."
 msgstr ""
 
@@ -351,7 +351,7 @@ msgstr ""
 msgid "security"
 msgstr ""
 
-#: ../logintoboggan.module:240;313;739;782
+#: ../logintoboggan.module:240;313;741;784
 msgid "user"
 msgstr ""
 
