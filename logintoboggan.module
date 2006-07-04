@@ -18,7 +18,9 @@
  * _ options for minimum/maximum username/password length
  * _ setting to expire unverified accounts and purge them from system
  *
- * @
+ */
+
+define('TOBOGGAN_PATH', drupal_get_path('module', 'logintoboggan'));
 
 /**
  * @defgroup logintoboggan_core Core drupal hooks
@@ -398,6 +400,9 @@ function logintoboggan_menu($may_cache) {
   }
   else {
 
+    // add custom css for the block
+    theme_add_style(TOBOGGAN_PATH .'/logintoboggan.css');
+
     //callback for re-sending validation e-mail
     $items[] = array('path' => 'toboggan/revalidate',
       'title' => t('re-send validation e-mail'),
@@ -506,12 +511,15 @@ function theme_lt_loggedinblock(){
  */
 
 function _logintoboggan_toggleboggan ($form) {
-  $pre = '<div id="toboggan-container">';
+
+  $pre = '<div id="toboggan-container" class="toboggan-container">';
+  $pre .= '<div class="toboggan-login-link">';
   $pre .= l(t('Login/Register'), 'user/login', array('onclick' => "toggleboggan('toboggan-login');this.blur();return false;"));
+  $pre .= '</div>';
 
   //Grab the message from settings if there is one to display at the top of the login block.
   if ($login_msg = variable_get('toboggan_block_msg', '')) {
-    $pre .= '<div>'. $login_msg .'</div>';
+    $pre .= '<div class="toboggan-block-message">'. $login_msg .'</div>';
   }
   //the block that will be toggled
   $pre .= '<div id="toboggan-login" class="user-login-block">';
