@@ -352,27 +352,6 @@ function logintoboggan_user_register_validate($form_id, $form_values) {
 }
 
 /**
- * Implementation of hook_init()
- *
- * @ingroup logintoboggan_core
- */
-function logintoboggan_init() {
-
-  global $user;
-
-  // If it's not an anonymous user, and the user has the pre-auth role, and the pre-auth role
-  // isn't also the auth role, then unset the auth role for this user--they haven't validated yet.
-  $id = logintoboggan_validating_id();
-  $in_pre_auth_role = in_array($id, array_keys($user->roles));
-  if ($user->uid && $in_pre_auth_role) {
-    $user->status = 1;
-    if ($id != 2) {
-      unset($user->roles[2]);
-    }
-  }
-}
-
-/**
  * Implementation of hook_menu()
  *
  * @ingroup logintoboggan_core
@@ -402,6 +381,17 @@ function logintoboggan_menu($may_cache) {
 
     // add custom css for the block
     theme_add_style(TOBOGGAN_PATH .'/logintoboggan.css');
+
+    // If it's not an anonymous user, and the user has the pre-auth role, and the pre-auth role
+    // isn't also the auth role, then unset the auth role for this user--they haven't validated yet.
+    $id = logintoboggan_validating_id();
+    $in_pre_auth_role = in_array($id, array_keys($user->roles));
+    if ($user->uid && $in_pre_auth_role) {
+      $user->status = 1;
+      if ($id != 2) {
+        unset($user->roles[2]);
+      }
+    }
 
     //callback for re-sending validation e-mail
     $items[] = array('path' => 'toboggan/revalidate',
