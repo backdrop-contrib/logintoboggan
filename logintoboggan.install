@@ -6,7 +6,7 @@
  * installation is ever necessary for the module.
  */
 function logintoboggan_update_1() {
-
+  return array();
 }
 
 /**
@@ -32,7 +32,7 @@ function logintoboggan_update_2() {
   }
 
   drupal_set_message(t('logintoboggan cleaning of user data successful'));
-  return $ret;
+  return array();
 }
 
 /**
@@ -43,6 +43,7 @@ function logintoboggan_update_3() {
   if (variable_get('reg_passwd_set', 0) == 2) {
     variable_set('reg_passwd_set', 1);
   }
+  return array();
 }
 
 /**
@@ -54,4 +55,5 @@ function logintoboggan_update_4() {
     variable_set('toboggan_role', 2);
     drupal_set_message(t('Your previous setting for the logintoboggan pre-auth role was the anonymous user role, which is no longer allowed.  The pre-auth role has now been set to the authenticated user role for your site. <em>Because of this change, all unvalidated users on your site now have authenticated user permissions!</em> If you wish to retain the previous functionality, create a new user role with the same access permissions as the anonymous user, and set the logintoboggan pre-auth role to the newly created role. You will also need to manually add any previously unvalidated users to the newly created pre-auth role.'), 'error');
   }
+  return array();
 }
