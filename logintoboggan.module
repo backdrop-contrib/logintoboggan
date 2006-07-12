@@ -256,21 +256,23 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
     // Create new user account, no administrator approval required.
     $subject = _user_mail_text('welcome_subject', $variables);
     $body = _user_mail_text('welcome_body', $variables);
+    $mailkey = 'user-register-welcome';
 
   } else {
 
     // Create new user account, administrator approval required.
     $subject = _user_mail_text('approval_subject', $variables);
     $body = _user_mail_text('approval_body', $variables);
+    $mailkey = 'user-register-approval-user';
 
     $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
 
-    user_mail(variable_get('site_mail', ini_get('sendmail_from')), $subject, t("%u has applied for an account.\n\n%uri", array('%u' => $account->name, '%uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+    drupal_mail('user-register-approval-admin', $from, $subject, t("%u has applied for an account.\n\n%uri", array('%u' => $account->name, '%uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), $from);
 
   }
 
   //mail the user.
-  user_mail($mail, $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+  drupal_mail($mailkey, $mail, $subject, $body, $from);
 
   drupal_set_message($message);
 
@@ -865,7 +867,7 @@ function logintoboggan_resend_validation($uid) {
   $from = variable_get('site_mail', ini_get('sendmail_from'));
   $subject = _user_mail_text('welcome_subject', $variables);
   $body = _user_mail_text('welcome_body', $variables);
-  user_mail($account->mail, $subject, $body, "From: $from\nReply-to: $from\nX-Mailer: Drupal\nReturn-path: $from\nErrors-to: $from");
+  drupal_mail('logintoboggan-resend-validation', $account->mail, $subject, $body, $from);
 
   // Notify user that e-mail was sent and return to user edit form.
   drupal_set_message(t('A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
