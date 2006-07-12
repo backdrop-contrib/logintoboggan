@@ -385,7 +385,7 @@ function logintoboggan_menu($may_cache) {
     $items[] = array(
       'path' => 'admin/settings/logintoboggan',
       'title' => t('logintoboggan'),
-      'callback' => '_logintoboggan_settings');
+      'callback' => 'logintoboggan_main_settings');
 
     //callback for user validate routine
     $items[] = array('path' => 'user/validate',
@@ -546,7 +546,7 @@ function _logintoboggan_toggleboggan ($form) {
   return $form;
 }
 
-function _logintoboggan_settings() {
+function logintoboggan_main_settings() {
   $version .= str_replace(array('$Re'.'vision:', '$Da'.'te:', '$'), array('', '', ''), '<p style="font-size:x-small">Login Toboggan version: <b>$Revision$</b>, $Date$</p>');
 
   $form['login'] = array('#type' => 'fieldset',
@@ -640,7 +640,7 @@ function _logintoboggan_settings() {
     '#description' => t('If enabled, users will receive a \'Login successful\' message upon login.')
   );
 
-  return system_settings_form('_logintoboggan_settings', $form);
+  return system_settings_form('logintoboggan_main_settings', $form);
 }
 
 /**
