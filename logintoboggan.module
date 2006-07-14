@@ -241,10 +241,12 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
     drupal_goto('user/register');
   }
 
-  // Set validating id
-  $validating_id = $reg_pass_set ? logintoboggan_validating_id() : DRUPAL_AUTHENTICATED_RID;
+  // Set the roles for the new user--it's the pre-auth role if they can pick their own password,
+  // and the pre-auth role isn't anon or auth user.
+  $validating_id = logintoboggan_validating_id();
+  $roles = ($reg_pass_set && ($validating_id > 2)) ? array($validating_id => 1) : array();
 
-  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => array($validating_id => 1), 'status' => variable_get('user_register', 1) == 1)));
+  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => $roles, 'status' => variable_get('user_register', 1) == 1)));
 
   watchdog('user', t('New user: %name %email.', array('%name' => theme('placeholder', $name), '%email' => theme('placeholder', '<'. $mail .'>'))), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
 
