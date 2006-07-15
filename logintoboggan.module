@@ -592,8 +592,7 @@ function logintoboggan_main_settings() {
     );
 
   // Grab the roles that can be used for pre-auth.  Remove the anon role, as it's not a valid choice.
-  $roles = user_roles();
-  unset($roles[1]);
+  $roles = user_roles(1);
 
   $form ['registration']['toboggan_role'] = array('#type' => 'select',
     '#title' => t('Non-authenticated role'),
