@@ -132,8 +132,11 @@ function logintoboggan_form_alter($form_id, &$form) {
       $user = user_load(array('uid' => arg(1)));
       $id = logintoboggan_validating_id();
       $in_pre_auth_role = in_array($id, array_keys($user->roles));
-      if ($in_pre_auth_role && (variable_get('user_register', 1) == 2)) {
-        $form['account']['status']['#description'] = t('If this user was created using the "Immediate Login" feature of Logintoboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site\'s pre-authorized role in the "Roles" section below, or they will not receive the authenticated users permissions!');
+      if ($in_pre_auth_role) {
+        if ((variable_get('user_register', 1) == 2)) {
+          $form['account']['status']['#description'] = t('If this user was created using the "Immediate Login" feature of LoginToboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site\'s pre-authorized role in the "Roles" section below, or they will not receive authenticated user permissions!');
+        }
+        $form['account']['roles']['#description'] = t('The user is assigned LoginToboggan\'s pre-authorized role, and is not currently receiving authenticated user permissions.');
       }
       break;
     case 'user_login':
