@@ -422,7 +422,7 @@ function logintoboggan_menu($may_cache) {
   else {
 
     // add custom css for the block
-    theme_add_style(drupal_get_path('module', 'logintoboggan') .'/logintoboggan.css');
+    drupal_add_css(drupal_get_path('module', 'logintoboggan') .'/logintoboggan.css');
 
     //callback for re-sending validation e-mail
     $items[] = array('path' => 'toboggan/revalidate',
