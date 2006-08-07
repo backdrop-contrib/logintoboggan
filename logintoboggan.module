@@ -167,6 +167,7 @@ function logintoboggan_form_alter($form_id, &$form) {
       if (!user_access('administer users') && ($mail || $pass)) {
         $form['#validate'] += array('logintoboggan_user_register_validate' => array());
         $form['#submit'] = array('logintoboggan_user_register_submit' => array($form_id, &$form_values));
+        unset($form['pass']);  // Must unset core form field to ensure proper ordering
 
         //Display a confirm e-mail address box if option is enabled.
         if ($mail) {
@@ -181,18 +182,8 @@ function logintoboggan_form_alter($form_id, &$form) {
 
         //Display a password and password confirm box if users can select their own passwords.
         if ($pass) {
-          $form['pass'] = array('#type' => 'password',
-            '#title' => t('Password'),
-            '#size' => 30,
-            '#maxlength' => 30,
+          $form['pass'] = array('#type' => 'password_confirm',
             '#description' => t('Please choose a password for your account; it must be between 6 and 30 characters and spaces are not allowed.'),
-            '#required' => TRUE,
-            );
-          $form['conf_pass'] = array('#type' => 'password',
-            '#title' => t('Confirm Password'),
-            '#size' => 30,
-            '#maxlength' => 30,
-            '#description' => t('Please re-type your password to confirm it is accurate.'),
             '#required' => TRUE,
             );
         }
@@ -200,12 +191,10 @@ function logintoboggan_form_alter($form_id, &$form) {
         // Have to put these in the login form group if it's been created
         if (isset($form['account'])) {
           unset($form['account']['pass']);  // We have to do this here b/c it already exists, and will foul up the form field order if we don't.
+          $form['account']['#weight'] = -50;  // Make sure account form group is at the top of the display.
           $form['account']['conf_mail'] = $form['conf_mail'];
           $form['account']['pass'] = $form['pass'];
-          $form['account']['conf_pass'] = $form['conf_pass'];
-          unset($form['conf_mail']);
-          unset($form['pass']);
-          unset($form['conf_pass']);
+          unset($form['conf_mail'], $form['pass']);
         }
       }
       break;
@@ -223,7 +212,6 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   $mail = $form_values['mail'];
   $name = $form_values['name'];
   $from = variable_get('site_mail', ini_get('sendmail_from'));
-  $notify = $form_values['notify'];
   $reg_pass_set = variable_get('reg_passwd_set', 0);
 
   //If we are allowing user selected passwords then skip the auto-generate function
@@ -234,9 +222,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
     $pass = user_password();
   }
 
-  // Must unset password confirmation to prevent it from being saved in the user table's 'data' field
-  // While we're at it, unset mail confirmation, too
-  if (isset($form_values['conf_pass'])) { unset($form_values['conf_pass']); }
+  // Must unset mail confirmation to prevent it from being saved in the user table's 'data' field.
   if (isset($form_values['conf_mail'])) { unset($form_values['conf_mail']); }
 
   if (array_intersect(array_keys($form_values), array('uid', 'roles', 'init', 'session', 'status'))) {
@@ -355,12 +341,9 @@ function logintoboggan_user_register_validate($form_id, $form_values) {
 
   //Do some password validation if password selection is enabled.
   if (variable_get('reg_passwd_set', 0)) {
-    if ($form_values['pass'] != $form_values['conf_pass']) {
-      form_set_error('conf_pass', t('Your password and confirmed password must match.'));
-    }
     $pass_err = logintoboggan_validate_pass($form_values['pass']);
     if ($pass_err) {
-      form_set_error('conf_pass', $pass_err);
+      form_set_error('pass', $pass_err);
     }
   }
 }
