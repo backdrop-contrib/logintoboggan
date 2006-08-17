@@ -26,7 +26,7 @@ function logintoboggan_update_2() {
         }
       }
       // reinsert the cleaned data for the user
-      $updated_data = db_escape_string(serialize($updated_data));
+      $updated_data = serialize($updated_data);
       db_query("UPDATE {users} SET data = '%s' WHERE uid = %d", $updated_data, $user->uid);
     }
   }
@@ -55,5 +55,43 @@ function logintoboggan_update_4() {
     variable_set('toboggan_role', 2);
     drupal_set_message(t('Your previous setting for the logintoboggan pre-auth role was the anonymous user role, which is no longer allowed.  The pre-auth role has now been set to the authenticated user role for your site. <em>Because of this change, all unvalidated users on your site now have authenticated user permissions!</em> If you wish to retain the previous functionality, create a new user role with the same access permissions as the anonymous user, and set the logintoboggan pre-auth role to the newly created role. You will also need to manually add any previously unvalidated users to the newly created pre-auth role.'), 'error');
   }
+  return array();
+}
+
+/**
+ * Implementation of hook_update_5()
+ */
+function logintoboggan_update_5() {
+  // get all profile fields.
+  $fields = db_query('SELECT fid, name FROM {profile_fields}');
+  while($field = db_fetch_object($fields)) {
+    $fids[$field->fid] = $field->name;
+    $where[] = "data LIKE '%%%s%%'";
+  }
+  if (isset($fids)) {
+    // get all users with any profile fields in their user data.
+    $users = db_query('SELECT uid, data FROM {users} WHERE '. implode(' OR ', $where), $fids);
+    while($user = db_fetch_object($users)) {
+      $data = unserialize($user->data);
+      $updated_data = array();
+      // Extract any profile values from the user's data.
+      if (is_array($data)) {
+        foreach($data as $key => $value) {
+          if (!in_array($key, $fids)) {
+            $updated_data[$key] = $value;
+          }
+          elseif ($value) {
+            // reinsert profile data into profile_values table.
+            db_query("INSERT INTO {profile_values} VALUES (%d, %d, '%s')", array_search($key, $fids), $user->uid, $value);
+          }
+        }
+        // reinsert the cleaned data for the user
+        $updated_data = serialize($updated_data);
+        db_query("UPDATE {users} SET data = '%s' WHERE uid = %d", $updated_data, $user->uid);
+      }
+    }
+  }
+
+  drupal_set_message(t('logintoboggan cleaning of user/profile data successful'));
   return array();
 }
