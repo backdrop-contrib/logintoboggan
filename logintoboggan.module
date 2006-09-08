@@ -73,7 +73,7 @@ Drupal ID: %username@%uri_brief
         '#rows' => 15,
       );
       $output .= drupal_get_form('logintoboggan_help', $form);
-      $output .= t('<p>Note that if you have set the "Visitors can create accounts but administrator approval is required" option for account approval, and are also using the "Set password & Immediate Login" feature of logintoboggan, the user will immediately receive the permissions of the pre-authorized user role--you may wish to create a pre-authorized role with the exact same permissions as the anonymous user if you wish the newly created user to only have anonymous permissions.</p><p>When a site administrator unblocks a user who is awaiting administrator approval, they must also manually remove the user from the site\'s pre-authorized role in order for the user to receive "authenticated user" permissions (if you are using the "Visitors can create accounts and no administrator approval is required" option, removal of the pre-authorized role will happen automatically).</p><p>Also be aware that logintoboggan only affects registrations initiated by users--any user account created by an administrator will not use any logintoboggan functionality.');
+      $output .= t('<p>Note that if you have set the "Visitors can create accounts but administrator approval is required" option for account approval, and are also using the "Set password & Immediate Login" feature of logintoboggan, the user will immediately receive the permissions of the pre-authorized user role--you may wish to create a pre-authorized role with the exact same permissions as the anonymous user if you wish the newly created user to only have anonymous permissions.</p><p>In order for a site administrator to unblock a user who is awaiting administrator approval, they must manually remove the user from the site\'s pre-authorized role--afterwards the user will then receive "authenticated user" permissions (if you are using the "Visitors can create accounts and no administrator approval is required" option, removal of the pre-authorized role will happen automatically).</p><p>Also be aware that logintoboggan only affects registrations initiated by users--any user account created by an administrator will not use any logintoboggan functionality.');
       return $output;
       break;
     case 'admin/settings/modules#description':
@@ -268,7 +268,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
 
     $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
 
-    drupal_mail('user-register-approval-admin', $from, $subject, t("@u has applied for an account.\n\n!uri", array('@u' => $account->name, '!uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), $from);
+    drupal_mail('user-register-approval-admin', $from, $subject, t("@u has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, visit their user account listed below and remove them from the validating role.\n\n!uri", array('@u' => $account->name, '!uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), $from);
 
   }
 
