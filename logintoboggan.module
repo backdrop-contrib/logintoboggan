@@ -235,11 +235,13 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   $validating_id = logintoboggan_validating_id();
   $roles = ($reg_pass_set && ($validating_id > 2)) ? array($validating_id => 1) : array();
 
-  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => $roles, 'status' => variable_get('user_register', 1) == 1)));
+  // Since logintoboggan automatically revokes auth privs from users with the temp role, always set status to 1,
+  // So users waiting for admin approval can have temp role perms.
+  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => $roles, 'status' => 1)));
 
   watchdog('user', t('New user: %name %email.', array('%name' => $name, '%email' => "<$mail>")), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
 
-  $login_url = $reg_pass_set ? logintoboggan_eml_validate_url($account) : user_pass_reset_url($account);
+  $login_url = ($reg_pass_set && variable_get('user_register', 1) == 1) ? logintoboggan_eml_validate_url($account) : user_pass_reset_url($account);
   $variables = array('%username' => $name, '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '%mailto' => $mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => $login_url);
 
   //compose the appropriate user message
@@ -833,7 +835,7 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
   global $user;
   if ($op == 'form' && $category == 'account' && $user->uid == arg(1)) {
     // User is editing their own account settings
-    if (variable_get('reg_passwd_set', 0) && array_key_exists(logintoboggan_validating_id(), $user_edit->roles)) {
+    if (variable_get('reg_passwd_set', 0) && array_key_exists(logintoboggan_validating_id(), $user_edit->roles) && variable_get('user_register', 1) == 1) {
       // User is still in pre-authorized role; display link to re-send e-mail.
       $form['revalidate'] = array(
         '#type' => 'fieldset',
