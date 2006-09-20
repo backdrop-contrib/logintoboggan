@@ -13,7 +13,6 @@
 
 /**
  * @wishlist (Chad)
- * _ integration w/ captcha mod.  may already be possible, but needs investigating
  * _ password complexity testing option
  * _ options for minimum/maximum username/password length
  * _ setting to expire unverified accounts and purge them from system
@@ -37,7 +36,7 @@ function logintoboggan_help($section) {
       $output = t('<p>The Login Toboggan module improves the Drupal login system by offering the following features:
       <ol>
       <li>Allow users to login using either their username OR their e-mail address.</li>
-      <li>Allow users to define their own password.</li>
+      <li>Allow users to define their own password during registration.</li>
       <li>Allow users to login immediately.</li>
       <li>Provide a login form on Access Denied pages for non-logged-in (anonymous) users.</li>
       <li>The module provides two login block options: One uses JavaScript to display the form within the block immediately upon clicking "log in". The other brings the user to a separate page, but returns the user to their original page upon login.</li>
@@ -50,7 +49,7 @@ function logintoboggan_help($section) {
       <p>Because this module completely reorients the Drupal login process you will probably want to edit the welcome e-mail on the user settings page. For instance if you have enabled the "Set password & Immediate Login" option, you probably should not send the user\'s password out in the welcome e-mail (also note when the "Set password & Immediate Login" option is enabled, the %login_url becomes a verification url that the user MUST visit in order to enable authenticated status). The following is an example welcome e-mail:</p>
       ', array('%url' => url('admin/user/logintoboggan')));
       $output .= drupal_get_form('logintoboggan_example_help');
-      $output .= t('<p>Note that if you have set the "Visitors can create accounts but administrator approval is required" option for account approval, and are also using the "Set password & Immediate Login" feature of logintoboggan, the user will immediately receive the permissions of the pre-authorized user role--you may wish to create a pre-authorized role with the exact same permissions as the anonymous user if you wish the newly created user to only have anonymous permissions.</p><p>In order for a site administrator to unblock a user who is awaiting administrator approval, they must manually remove the user from the site\'s pre-authorized role--afterwards the user will then receive "authenticated user" permissions (if you are using the "Visitors can create accounts and no administrator approval is required" option, removal of the pre-authorized role will happen automatically).</p><p>Also be aware that logintoboggan only affects registrations initiated by users--any user account created by an administrator will not use any logintoboggan functionality.');
+      $output .= t('<p>Note that if you have set the "Visitors can create accounts but administrator approval is required" option for account approval, and are also using the "Set password & Immediate Login" feature of logintoboggan, the user will immediately receive the permissions of the pre-authorized user role--you may wish to create a pre-authorized role with the exact same permissions as the anonymous user if you wish the newly created user to only have anonymous permissions.</p><p>In order for a site administrator to unblock a user who is awaiting administrator approval, they must either click on the validation link they receive in their notification e-mail, or manually remove the user from the site\'s pre-authorized role--afterwards the user will then receive "authenticated user" permissions (if you are using the "Visitors can create accounts and no administrator approval is required" option, removal of the pre-authorized role will happen automatically when the user validates their account via e-mail).</p><p>Also be aware that logintoboggan only affects registrations initiated by users--any user account created by an administrator will not use any logintoboggan functionality.');
       return $output;
       break;
     case 'admin/user/logintoboggan':
