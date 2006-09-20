@@ -12,7 +12,7 @@
  */
 
 /**
- * @wishlist (Chad)
+ * @wishlist
  * _ password complexity testing option
  * _ options for minimum/maximum username/password length
  * _ setting to expire unverified accounts and purge them from system
