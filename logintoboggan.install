@@ -95,3 +95,19 @@ function logintoboggan_update_5() {
   drupal_set_message(t('logintoboggan cleaning of user/profile data successful'));
   return array();
 }
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function logintoboggan_uninstall() {
+  variable_del('toboggan_block_type');
+  variable_del('toboggan_display_logged_in');
+  variable_del('toboggan_block_msg');
+  variable_del('login_with_mail');
+  variable_del('email_reg_confirm');
+  variable_del('reg_passwd_set');
+  variable_del('toboggan_role');
+  variable_del('toboggan_redirect_on_register');
+  variable_del('toboggan_redirect_on_confirm');
+  variable_del('login_successful');
+}
