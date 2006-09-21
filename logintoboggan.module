@@ -132,6 +132,9 @@ function logintoboggan_form_alter($form_id, &$form) {
         variable_set('site_403', '');
       }
       break;
+    case 'logintoboggan_main_settings':
+      $form['#submit'] += array('logintoboggan_flip_user_email_verification' => array());
+      break;
     case 'user_edit':
       $user = user_load(array('uid' => arg(1)));
       $id = logintoboggan_validating_id();
@@ -167,38 +170,35 @@ function logintoboggan_form_alter($form_id, &$form) {
 
     case 'user_register':
       $mail = variable_get('email_reg_confirm', 0);
-      $pass = variable_get('reg_passwd_set', 0);
+      $pass = !variable_get('user_email_verification', TRUE);
       if (!user_access('administer users') && ($mail || $pass)) {
         $form['#validate'] += array('logintoboggan_user_register_validate' => array());
         $form['#submit'] = array('logintoboggan_user_register_submit' => array($form_id, &$form_values));
-        unset($form['pass']);  // Must unset core form field to ensure proper ordering
 
         //Display a confirm e-mail address box if option is enabled.
         if ($mail) {
           $form['conf_mail'] = array('#type' => 'textfield',
             '#title' => t('Confirm e-mail address'),
             '#size' => 30,
+            '#weight' => -28,
             '#maxlength' => 64,
             '#description' => t('Please re-type your e-mail address to confirm it is accurate.'),
             '#required' => TRUE,
             );
         }
 
-        //Display a password and password confirm box if users can select their own passwords.
-        if ($pass) {
-          $form['pass'] = array('#type' => 'password_confirm',
-            '#description' => t('Please choose a password for your account; it must be between 6 and 30 characters and spaces are not allowed.'),
-            '#required' => TRUE,
-            );
-        }
-
-        // Have to put these in the login form group if it's been created
+        // Weight things properly so that the order is name, mail, conf_mail, then pass
         if (isset($form['account'])) {
-          unset($form['account']['pass']);  // We have to do this here b/c it already exists, and will foul up the form field order if we don't.
           $form['account']['#weight'] = -50;  // Make sure account form group is at the top of the display.
+          $form['account']['name']['#weight'] = -30;
+          $form['account']['mail']['#weight'] = -29;
           $form['account']['conf_mail'] = $form['conf_mail'];
-          $form['account']['pass'] = $form['pass'];
-          unset($form['conf_mail'], $form['pass']);
+          unset($form['conf_mail']);
+          $form['account']['conf_mail']['#weight'] = -28;
+        }
+        else {
+          $form['name']['#weight'] = -30;
+          $form['mail']['#weight'] = -29;
         }
       }
       break;
@@ -216,10 +216,10 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   $mail = $form_values['mail'];
   $name = $form_values['name'];
   $from = variable_get('site_mail', ini_get('sendmail_from'));
-  $reg_pass_set = variable_get('reg_passwd_set', 0);
+  $reg_pass_set = !variable_get('user_email_verification', TRUE);
 
   //If we are allowing user selected passwords then skip the auto-generate function
-  if (variable_get('reg_passwd_set', 0)) {
+  if ($reg_pass_set) {
     $pass = $form_values['pass'];
   }
   else {
@@ -249,7 +249,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   $variables = array('%username' => $name, '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '%mailto' => $mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => $login_url);
 
   //compose the appropriate user message--admin approvals don't require a validation email
-  if(variable_get('reg_passwd_set', 0) && variable_get('user_register', 1) == 1) {
+  if($reg_pass_set && variable_get('user_register', 1) == 1) {
     $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
 
   } else {
@@ -285,7 +285,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   $redirect = variable_get('toboggan_redirect_on_register', '');
 
   //log the user in if they created the account and immediate login is enabled.
-  if(variable_get('reg_passwd_set', 0)) {
+  if($reg_pass_set) {
     logintoboggan_process_login($account, $redirect);
   }
 
@@ -346,7 +346,7 @@ function logintoboggan_user_register_validate($form_id, $form_values) {
   }
 
   //Do some password validation if password selection is enabled.
-  if (variable_get('reg_passwd_set', 0)) {
+  if (!variable_get('user_email_verification', TRUE)) {
     $pass_err = logintoboggan_validate_pass($form_values['pass']);
     if ($pass_err) {
       form_set_error('pass', $pass_err);
@@ -582,10 +582,9 @@ function logintoboggan_main_settings() {
     '#description' => t('User will have to type the same e-mail address into both fields. This helps to confirm that they\'ve typed the correct address.'),
     );
 
-  $form['registration']['reg_passwd_set'] = array('#type' => 'radios',
-    '#title' => t('Allow user to set their password during registration'),
-    '#default_value' => variable_get('reg_passwd_set', 0),
-    '#options' => array($_disabled, t('Set password & Immediate login')),
+  $form['registration']['user_email_verification'] = array('#type' => 'checkbox',
+    '#title' => t('Set password & Immediate login'),
+    '#default_value' => !variable_get('user_email_verification', TRUE) ? 1 : 0,
     '#description' => t('This will allow users to choose their initial password when registering.  If \'Set password & Immediate login\' is selected, users will be assigned to the role below and logged in immediately. They will not be assigned to the "authenticated user" role until they confirm their e-mail address by following the link in their registration e-mail. It is HIGHLY recommended that you set up a "pre-authorized" role with limited permissions for this purpose. <br />NOTE: If you enable this feature, you should edit the !settings--more help in writing the e-mail message can be found at !help.', array('!settings' => l('user e-mail welcome message', 'admin/user/settings'), '!help' => l('logintoboggan help', 'admin/help/logintoboggan'))),
     );
 
@@ -841,7 +840,7 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
   global $user;
   if ($op == 'form' && $category == 'account' && $user->uid == arg(1)) {
     // User is editing their own account settings
-    if (variable_get('reg_passwd_set', 0) && array_key_exists(logintoboggan_validating_id(), $user_edit->roles) && variable_get('user_register', 1) == 1) {
+    if (!variable_get('user_email_verification', TRUE) && array_key_exists(logintoboggan_validating_id(), $user_edit->roles) && variable_get('user_register', 1) == 1) {
       // User is still in pre-authorized role; display link to re-send e-mail.
       $form['revalidate'] = array(
         '#type' => 'fieldset',
@@ -883,4 +882,16 @@ function logintoboggan_resend_validation($uid) {
 
 function _logintoboggan_protocol() {
   return (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http');
+}
+
+/**
+ * Flips the value of the user_email_settings variable.  This setting is less confusing when it works the opposite
+ * of it's current core behavior.
+ *
+ * @param $form_id ID of the submitted form.
+ * @param $form_values Submitted form values.
+ */
+function logintoboggan_flip_user_email_verification($form_id, $form_values) {
+  $value = $form_values['user_email_verification'] ? FALSE : TRUE;
+  variable_set('user_email_verification', $value);
 }
