@@ -97,11 +97,17 @@ function logintoboggan_update_5() {
 }
 
 /**
+ * Implementation of hook_update_6()
+ */
+function logintoboggan_update_6() {
+  variable_del('toboggan_display_logged_in');
+}
+
+/**
  * Implementation of hook_uninstall().
  */
 function logintoboggan_uninstall() {
   variable_del('toboggan_block_type');
-  variable_del('toboggan_display_logged_in');
   variable_del('toboggan_block_msg');
   variable_del('login_with_mail');
   variable_del('email_reg_confirm');

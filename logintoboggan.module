@@ -98,32 +98,24 @@ Drupal ID: %username@%uri_brief
 function logintoboggan_form_alter($form_id, &$form) {
   global $form_values;
   switch ($form_id) {
-
-/*    This will be used later when the conversion to the user login block is complete
     case 'block_admin_configure':
       if (($form['module']['#value'] == 'user') && ($form['delta']['#value'] == 0)) {
-        $form['#submit'] += array('logintoboggan_user_block_admin_configure_submit' => array($form_id, &$form_values));
-        $form['block_settings'] = array(
-          '#type' => 'fieldset',
-          '#title' => t('Block specific settings'),
-          '#collapsible' => true,
-          '#weight' => 0,
-        );
-        $form['block_settings']['toboggan_display_logged_in'] = array('#type' => 'checkbox',
-          '#title' => t('Display the \'logged in\' block'),
-          '#default_value' => variable_get('toboggan_display_logged_in', 1),
-          );
-        $form['toboggan_block_type'] = array('#type' => 'radios',
+        $form['#submit'] += array('logintoboggan_user_block_admin_configure_submit' => array($form));
+
+        $form['block_settings']['title']['#description'] = t('Override the default title for the block. Use <em>&lt;none&gt;</em> to display no title, or leave blank to use the default block title.<br \><strong>Note:</strong> Logintoboggan module is installed. If you are using one of the custom login block types below, it is recommended that you set this to <em>&lt;none&gt;</em>');
+
+        $form['block_settings']['toboggan_block_type'] = array('#type' => 'radios',
           '#title' => t('Block type'),
           '#default_value' => variable_get('toboggan_block_type', 1),
-          '#options' => array(t('Link'), t('Collapsible Form')),
-          );
+          '#options' => array(t('Standard'), t('Link'), t('Collapsible Form')),
+        );
+
         $form['block_settings']['toboggan_block_msg'] = array('#type' => 'textarea',
-          '#title' => t('Set a custom message to appear at the top of your login block'),
+          '#title' => t('Set a custom message to appear at the top of the login block'),
           '#default_value' => variable_get('toboggan_block_msg', ''),
-          );
+        );
       }
-      break;*/
+      break;
 
     // This will reset the the site 403 variable to the default if the module is disabled and the toboggan redirect on acccess
     // denied is enabled.
@@ -148,24 +140,36 @@ function logintoboggan_form_alter($form_id, &$form) {
       break;
     case 'user_login':
     case 'user_login_block':
+      //Grab the message from settings if there is one to display at the top of the login block.
+      if ($login_msg = variable_get('toboggan_block_msg', '')) {
+        $form['message'] = array('#value' => $login_msg,
+                             '#weight' => -50,
+                           );
+      }
+      $form['#validate'] = array('logintoboggan_user_login_validate' => array()) + $form['#validate'];
+      $form['name']['#attributes'] = array('tabindex' => '1');
+      $form['pass']['#attributes'] = array('tabindex' => '2');
+      $form['submit']['#attributes'] = array('tabindex' => '3');
       if (variable_get('login_with_mail', 0)) {
-        $form['#validate'] = array('logintoboggan_user_login_validate' => array());
         $form['name']['#title'] = t('Username or e-mail address');
-        $form['name']['#attributes'] = array('tabindex' => '1');
-        $form['pass']['#attributes'] = array('tabindex' => '2');
-        $form['submit']['#attributes'] = array('tabindex' => '3');
         if (variable_get('drupal_authentication_service', FALSE) && count(user_auth_help_links()) > 0) {
           $form['name']['#description'] = t('Enter your %s username, e-mail address, or an ID from one of our affiliates: !a.', array('%s' => variable_get('site_name', 'local'), '!a' => implode(', ', user_auth_help_links())));
         }
-        if($GLOBALS['logintoboggan_denied'] == TRUE){
-          $form['#redirect'] = logintoboggan_destination();
+      }
+      if($GLOBALS['logintoboggan_denied'] == TRUE){
+        $form['#redirect'] = logintoboggan_destination();
+      }
+
+      if (($form_id == 'user_login_block')) {
+        $block_type = variable_get('toboggan_block_type', 1);
+        if ($block_type == 1) {
+          $form = array('#value' => l(t('Login/Register'), 'user/login', array(), drupal_get_destination()));
+        }
+        elseif ($block_type == 2) {
+          $form  = _logintoboggan_toggleboggan($form);
         }
       }
 
-      // The $_POST check is a temporary hack to make sure the user login block doesn't get processed
-      if (($form_id == 'user_login_block') && isset($_POST['logintoboggan']['login_block'])) {
-        $form  = _logintoboggan_toggleboggan($form);
-      }
       break;
 
     case 'user_register':
@@ -302,25 +306,11 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
  *
  * @ingroup logintoboggan_form
  */
-function logintoboggan_user_login_validate($form_id, $form_values) {
+function logintoboggan_user_login_validate($form_id, $form_values, $form) {
+  global $form_values;
   if (isset($form_values['name']) && variable_get('login_with_mail', 0)) {
-    if (user_is_blocked($form_values['name'])) {
-      // blocked in user administration
-      form_set_error('login', t('The username %name has been blocked.', array('%name' => $form_values['name'])));
-    }
-    else if (drupal_is_denied('user', $form_values['name'])) {
-      // denied by access controls
-      form_set_error('login', t('The name %name is a reserved username.', array('%name' => $form_values['name'])));
-    }
-    else if ($form_values['pass']) {
-
-      $user = logintoboggan_authenticate($form_values['name'], trim($form_values['pass']));
-
-      if (!$user->uid) {
-        form_set_error('login', t('Sorry. Unrecognized username or password.') .' '. l(t('Have you forgotten your password?'), 'user/password'));
-        watchdog('user', t('Login attempt failed for %user.', array('%user' => $form_values['name'])));
-        drupal_goto('user/login');
-      }
+    if ($name = db_result(db_query("SELECT name FROM {users} WHERE LOWER(mail) = LOWER('%s')", $form_values['name']))) {
+      form_set_value($form['name'], $name);
     }
   }
 }
@@ -431,13 +421,10 @@ function logintoboggan_menu($may_cache) {
  * @defgroup logintoboggan_block Functions for LoginToboggan blocks.
  */
 
-/* This will be used later when the conversion to using the user login block is complete
 function logintoboggan_user_block_admin_configure_submit($form_id, $form_values) {
-  toboggan_block_msg
   variable_set('toboggan_block_type', $form_values['toboggan_block_type']);
-  variable_set('toboggan_display_logged_in', $form_values['toboggan_display_logged_in']);
   variable_set('toboggan_block_msg', $form_values['toboggan_block_msg']);
-}*/
+}
 
 /**
  * Implementation of hook_block
@@ -447,54 +434,14 @@ function logintoboggan_block($op = 'list', $delta = 0, $edit = array()) {
 
   switch ($op) {
     case 'list' :
-      $blocks[0]['info'] = t('LoginToboggan custom login');
+      $blocks[0]['info'] = t('LoginToboggan logged in block');
       return $blocks;
       break;
-    case 'configure':
-      if ($delta == 0){
-        $form['toboggan_display_logged_in'] = array('#type' => 'checkbox',
-          '#title' => t('Display the \'logged in\' block'),
-          '#default_value' => variable_get('toboggan_display_logged_in', 1),
-          );
-        $form['toboggan_block_type'] = array('#type' => 'radios',
-          '#title' => t('Block type'),
-          '#default_value' => variable_get('toboggan_block_type', 1),
-          '#options' => array(t('Link'), t('Collapsible Form')),
-          );
-        $form['toboggan_block_msg'] = array('#type' => 'textarea',
-          '#title' => t('Set a custom message to appear at the top of your login block'),
-          '#default_value' => variable_get('toboggan_block_msg', ''),
-          );
-        return $form;
-      }
-      break;
-    case 'save' :
-      if ($delta == 0){
-        variable_set('toboggan_block_type', $edit['toboggan_block_type']);
-        variable_set('toboggan_display_logged_in', $edit['toboggan_display_logged_in']);
-        variable_set('toboggan_block_msg', $edit['toboggan_block_msg']);
-      }
-      break;
     case 'view' :
+      $block = array();
       switch ($delta) {
         case 0:
-          // For usability's sake, avoid showing two login forms on one page.
-          if (!$user->uid && !(arg(0) == 'user' && !is_numeric(arg(1)))) {
-            if (variable_get('toboggan_block_type', 1) == 1) {
-
-              // A temporary hack to make sure the user login block itself doesn't get altered as well
-              $_POST['logintoboggan']['login_block'] = TRUE;
-
-              // Calling the user login block here directly in order to be able to use the form and alter it for our needs.
-              // We also have to unset the ugly title from the user block
-              $block = user_block('view', 0);
-              unset($block['subject']);
-            }
-            else {
-              $block['content'] = l(t('Login/Register'), 'user/login', array(), drupal_get_destination());
-            }
-          }
-          elseif ($user->uid && variable_get('toboggan_display_logged_in', 1)) {
+          if ($user->uid) {
             $block['content'] =  theme('lt_loggedinblock');
           }
           return $block;
@@ -529,10 +476,6 @@ function _logintoboggan_toggleboggan ($form) {
   $pre .= l(t('Login/Register'), 'user/login', array('onclick' => "toggleboggan('toboggan-login');this.blur();return false;"));
   $pre .= '</div>';
 
-  //Grab the message from settings if there is one to display at the top of the login block.
-  if ($login_msg = variable_get('toboggan_block_msg', '')) {
-    $pre .= '<div class="toboggan-block-message">'. $login_msg .'</div>';
-  }
   //the block that will be toggled
   $pre .= '<div id="toboggan-login" class="user-login-block">';
   $form['pre'] = array('#value' => $pre, '#weight' => -300);
@@ -649,27 +592,6 @@ function logintoboggan_main_settings() {
   );
 
   return system_settings_form($form);
-}
-
-/**
-  * Wrapper for user_authenticate()
-  * - allows users to login using their e-mail address
-  */
-
-function logintoboggan_authenticate($name, $pass) {
-
-  // first see if $name is a valid username
-  $account = user_load(array('name' => $name));
-
-  // if not, see if user is logging in with a user's e-mail address
-  if (!$account->uid && variable_get('login_with_mail', 0)) {
-    if($account = user_load(array('mail' => $name))) {
-      $name = $account->name;
-    }
-  }
-
-  // hand it off to user_authenticate for the good stuff
-  return user_authenticate($name, $pass);
 }
 
 function logintoboggan_denied() {
