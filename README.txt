@@ -26,4 +26,5 @@ INSTALLATION:
 
 Put the module in your modules/ directory, or your sites/all/ direcory.
 Enable it.
+Configure settings at administer -> user management -> logintoboggan.
 Done.
