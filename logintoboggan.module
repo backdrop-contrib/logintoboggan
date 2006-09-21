@@ -146,11 +146,11 @@ function logintoboggan_form_alter($form_id, &$form) {
                              '#weight' => -50,
                            );
       }
-      $form['#validate'] = array('logintoboggan_user_login_validate' => array()) + $form['#validate'];
       $form['name']['#attributes'] = array('tabindex' => '1');
       $form['pass']['#attributes'] = array('tabindex' => '2');
       $form['submit']['#attributes'] = array('tabindex' => '3');
       if (variable_get('login_with_mail', 0)) {
+        $form['#validate'] = array('logintoboggan_user_login_validate' => array()) + $form['#validate'];
         $form['name']['#title'] = t('Username or e-mail address');
         if (variable_get('drupal_authentication_service', FALSE) && count(user_auth_help_links()) > 0) {
           $form['name']['#description'] = t('Enter your %s username, e-mail address, or an ID from one of our affiliates: !a.', array('%s' => variable_get('site_name', 'local'), '!a' => implode(', ', user_auth_help_links())));
@@ -307,8 +307,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
  * @ingroup logintoboggan_form
  */
 function logintoboggan_user_login_validate($form_id, $form_values, $form) {
-  global $form_values;
-  if (isset($form_values['name']) && variable_get('login_with_mail', 0)) {
+  if (isset($form_values['name'])) {
     if ($name = db_result(db_query("SELECT name FROM {users} WHERE LOWER(mail) = LOWER('%s')", $form_values['name']))) {
       form_set_value($form['name'], $name);
     }
