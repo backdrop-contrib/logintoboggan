@@ -101,6 +101,7 @@ function logintoboggan_update_5() {
  */
 function logintoboggan_update_6() {
   variable_del('toboggan_display_logged_in');
+  return array();
 }
 
 /**
