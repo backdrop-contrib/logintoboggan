@@ -250,7 +250,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   watchdog('user', t('New user: %name %email.', array('%name' => $name, '%email' => "<$mail>")), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
 
   $login_url = ($reg_pass_set && variable_get('user_register', 1) == 1) ? logintoboggan_eml_validate_url($account) : user_pass_reset_url($account);
-  $variables = array('%username' => $name, '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '%mailto' => $mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => $login_url);
+  $variables = array('!username' => $name, '!site' => variable_get('site_name', 'drupal'), '!password' => $pass, '!uri' => $base_url, '!uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '!mailto' => $mail, '!date' => format_date(time()), '!login_uri' => url('user', NULL, NULL, TRUE), '!edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '!login_url' => $login_url);
 
   //compose the appropriate user message--admin approvals don't require a validation email
   if($reg_pass_set && variable_get('user_register', 1) == 1) {
@@ -276,7 +276,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
 
     $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
 
-    drupal_mail('user-register-approval-admin', $from, $subject, t("@u has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!uri", array('@u' => $account->name, '!validating_url' => logintoboggan_eml_validate_url($account), '!uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), $from);
+    drupal_mail('user-register-approval-admin', $from, $subject, t("!u has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!uri", array('!u' => $account->name, '!validating_url' => logintoboggan_eml_validate_url($account), '!uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), $from);
 
   }
 
