@@ -275,8 +275,15 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
     $mailkey = 'user-register-approval-user';
 
     $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
+    $admin_variables = array('!u' => $account->name, '!validating_url' => logintoboggan_eml_validate_url($account), '!uri' => url("user/$account->uid/edit", NULL, NULL, TRUE));
 
-    drupal_mail('user-register-approval-admin', $from, $subject, t("!u has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!uri", array('!u' => $account->name, '!validating_url' => logintoboggan_eml_validate_url($account), '!uri' => url("user/$account->uid/edit", NULL, NULL, TRUE))), $from);
+    if ($reg_pass_set) {
+      $admin_body = t("!u has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!uri", $admin_variables);
+    }
+    else {
+      $admin_body =t("!u has applied for an account.\n\n!uri", $admin_variables);
+    }
+    drupal_mail('user-register-approval-admin', $from, $subject, $admin_body, $from);
 
   }
 
