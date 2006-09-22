@@ -128,6 +128,7 @@ function logintoboggan_form_alter($form_id, &$form) {
       $form['#submit'] += array('logintoboggan_flip_user_email_verification' => array());
       break;
     case 'user_edit':
+      $form['#validate'] += array('logintoboggan_user_edit_validate' => array());
       $user = user_load(array('uid' => arg(1)));
       $id = logintoboggan_validating_id();
       $in_pre_auth_role = in_array($id, array_keys($user->roles));
@@ -343,6 +344,21 @@ function logintoboggan_user_register_validate($form_id, $form_values) {
 
   //Do some password validation if password selection is enabled.
   if (!variable_get('user_email_verification', TRUE)) {
+    $pass_err = logintoboggan_validate_pass($form_values['pass']);
+    if ($pass_err) {
+      form_set_error('pass', $pass_err);
+    }
+  }
+}
+
+/**
+ * Custom validation function for user edit form
+ *
+ * @ingroup logintoboggan_form
+ */
+function logintoboggan_user_edit_validate($form_id, $form_values) {
+  if (strlen($form_values['pass'])) {
+    // if we're changing the password, validate it
     $pass_err = logintoboggan_validate_pass($form_values['pass']);
     if ($pass_err) {
       form_set_error('pass', $pass_err);
