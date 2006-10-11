@@ -117,4 +117,5 @@ function logintoboggan_uninstall() {
   variable_del('toboggan_redirect_on_register');
   variable_del('toboggan_redirect_on_confirm');
   variable_del('login_successful');
+  variable_del('toboggan_min_pass_length');
 }
