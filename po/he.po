@@ -1,0 +1,368 @@
+# Hebrew translation 
+# Copyright (c) 2006 Amnon Levav <amnon@levavie.com>
+# Hebrew translation of Drupal logintoboggan.module
+
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: he\n"
+"POT-Creation-Date: 2006-09-25 07:46-0400\n"
+"PO-Revision-Date: 2006-09-25 07:46-0400\n"
+"Last-Translator: לבבי <amnon@levavie.com>\n"
+"Language-Team: Hebrew <amnon@levavie.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: logintoboggan.module:37
+msgid "<p>The Login Toboggan module improves the Drupal login system by offering the following features:\n      <ol>\n      <li>Allow users to login using either their username OR their e-mail address.</li>\n      <li>Allow users to define their own password.</li>\n      <li>Allow users to login immediately.</li>\n      <li>Provide a login form on Access Denied pages for non-logged-in (anonymous) users.</li>\n      <li>The module provides two login block options: One uses JavaScript to display the form within the block immediately upon clicking \"log in\". The other brings the user to a separate page, but returns the user to their original page upon login.</li>\n      <li>Customize the registration form with two e-mail fields to ensure accuracy.</li>\n      <li>Optionally redirect the user to a specific page when using the 'immediate login' feature.</li>\n      <li>Optionally redirect the user to a specific page upon validation of their e-mail address.</li>\n      <li>Optionally display a user message indicating a successful login.</li>\n      </ol>\n      These features may be turned on or off in the Login Toboggan <a href=\"%url\">settings</a>.</p>\n      <p>Because this module completely reorients the Drupal login process you will probably want to edit the welcome e-mail on the user settings page. For instance if you have enabled the \"Set password & Immediate Login\" option, you probably should not send the user's password out in the welcome e-mail (also note when the \"Set password & Immediate Login\" option is enabled, the %login_url becomes a verification url that the user MUST visit in order to enable authenticated status). The following is an example welcome e-mail:</p>\n      "
+msgstr ""
+
+#: logintoboggan.module:52
+msgid "\n%username,\n\nThank you for registering at %site.\n\nIMPORTANT:\nFor full site access, you will need to click on this link or copy and paste it in your browser:\n\n%login_url\n\nThis will verify your account and log you into the site. In the future you will be able to log in using the username and password that you created during registration.\n\nYour new %site membership also enables to you to login to other Drupal powered websites (e.g. http://www.drupal.org/) without registering. Just use the following Drupal ID along with the password you've chosen:\n\nDrupal ID: %username@%uri_brief\n\n\n--  %site team"
+msgstr ""
+
+#: logintoboggan.module:76
+msgid "<p>Note that if you have set the \"Visitors can create accounts but administrator approval is required\" option for account approval, and are also using the \"Set password & Immediate Login\" feature of logintoboggan, the user will immediately receive the permissions of the pre-authorized user role--you may wish to create a pre-authorized role with the exact same permissions as the anonymous user if you wish the newly created user to only have anonymous permissions.</p><p>In order for a site administrator to unblock a user who is awaiting administrator approval, they must manually remove the user from the site's pre-authorized role--afterwards the user will then receive \"authenticated user\" permissions (if you are using the \"Visitors can create accounts and no administrator approval is required\" option, removal of the pre-authorized role will happen automatically).</p><p>Also be aware that logintoboggan only affects registrations initiated by users--any user account created by an administrator will not use any logintoboggan functionality."
+msgstr "LoginToboggan משפיע רק על הצטרפויות יזומות על ידי הגולש. כל חבר באתר שנוצר על ידי מנהל לא ישתמש בתפקודי LoginToboggan"
+
+#: logintoboggan.module:80
+msgid "Improves Drupal's login system."
+msgstr "משפר את מערכת הכניסה לאתר"
+
+#: logintoboggan.module:83
+msgid "<p>Customize your login and registration system. More help can be found <a href=\"%url\">here</a>.</p>"
+msgstr "<p>משפר את תהליך הכניסה וההצטרפות. עוד עזרה אפשר למצוא <a href=\"%url\">כאן</a>.</p>"
+
+#: logintoboggan.module:112
+msgid "If this user was created using the \"Immediate Login\" feature of LoginToboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site's pre-authorized role in the \"Roles\" section below, or they will not receive authenticated user permissions!"
+msgstr ""
+
+#: logintoboggan.module:114
+msgid "The user is assigned LoginToboggan's pre-authorized role, and is not currently receiving authenticated user permissions."
+msgstr "חבר זה עדיין לא אישר את כתובת הדואר האלקטרוני שלו ולכן יש לו תפקיד שאושר אוטומטית, והוא אינו מקבל את ההרשאות המלאות של חבר באתר."
+
+#: logintoboggan.module:121
+msgid "Username or e-mail address"
+msgstr "שם משתמש או כתובת דואר אלקטרוני"
+
+#: logintoboggan.module:126
+msgid "Enter your %s username, e-mail address, or an ID from one of our affiliates: %a."
+msgstr "אפשר להכניס את הכינוי שלך באתר זה, או באחד מהאתרים השותפים: %a."
+
+#: logintoboggan.module:149
+msgid "Confirm e-mail address"
+msgstr "אישור כתובת דואר אלקטרוני"
+
+#: logintoboggan.module:152
+msgid "Please re-type your e-mail address to confirm it is accurate."
+msgstr "בבקשה לרשום שוב את כתובת הדואר האלקטרוני כדי לוודא שהיא מדוייקת."
+
+#: logintoboggan.module:160
+msgid "Password"
+msgstr "סיסמה"
+
+#: logintoboggan.module:163
+msgid "Please choose a password for your account; it must be between 6 and 30 characters and spaces are not allowed."
+msgstr "בבקשה לבחור סיסמה לכניסה למערכת. הסיסמה חייבת להיות בין 6 ל-30 אותיות, ואסור שיהיו בה רווחים"
+
+#: logintoboggan.module:167
+msgid "Confirm Password"
+msgstr "אישור סיסמה"
+
+#: logintoboggan.module:170
+msgid "Please re-type your password to confirm it is accurate."
+msgstr "בבקשה לרשום שוב את הסיסמה שלך כדי לאשר שהיא מדוייקת."
+
+#: logintoboggan.module:218
+msgid "Detected malicious attempt to alter protected user fields."
+msgstr "זוהה נסיון זדוני לשנות שדות משתמש מוגנים."
+
+#: logintoboggan.module:231
+msgid "New user: %name %email."
+msgstr "משתמש חדש: %name %email."
+
+#: logintoboggan.module:231
+msgid "edit"
+msgstr "ערוך"
+
+#: logintoboggan.module:238
+msgid "A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message."
+msgstr "הודעת אישור נשלחה לכתובת הדואר האלקטרוני שלך. כדי להשתמש בצורה מלאה באתר, יש למלא את ההנחיות בהודעה."
+
+#: logintoboggan.module:241
+msgid "Your password and further instructions have been sent to your e-mail address."
+msgstr "הסיסמה והנחיות נוספות נשלחו לתיבת הדואר האלקטרוני שלך."
+
+#: logintoboggan.module:256
+msgid "Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />"
+msgstr "תודה שביקשת להצטרף לאתר. החשבון שלך מחכה כעת לאישור על ידי מנהל האתר <br />"
+
+#: logintoboggan.module:258
+msgid "%u has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n%validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role. \n\n%uri"
+msgstr ""
+
+#: logintoboggan.module:292
+msgid "The username %name has been blocked."
+msgstr "המשתמש %name נחסם."
+
+#: logintoboggan.module:296
+msgid "The name %name is a reserved username."
+msgstr "השם %name הוא  כינוי שמור."
+
+#: logintoboggan.module:303
+msgid "Sorry. Unrecognized username or password."
+msgstr "מצטערים. שם המשתמש או הסיסמה לא מוכרים."
+
+#: logintoboggan.module:303
+msgid "Have you forgotten your password?"
+msgstr "האם שכחת את הסיסמה שלך?"
+
+#: logintoboggan.module:304
+msgid "Login attempt failed for %user."
+msgstr "נסיון כניסה נכשל עבור %user."
+
+#: logintoboggan.module:320
+msgid "This e-mail address has already been taken by another user."
+msgstr "כתובת זו נמצאת כבר בשימוש חבר אחר באתר."
+
+#: logintoboggan.module:327
+msgid "Your e-mail address and confirmed e-mail address must match."
+msgstr "כתובת הדואר האלקטרוני שלך וכתובת האישור חייבות להתאים זו לזו"
+
+#: logintoboggan.module:334
+msgid "Your password and confirmed password must match."
+msgstr "הסיסמה ואישור הסיסמה חייבים להתאים."
+
+#: logintoboggan.module:391
+msgid "validate e-mail address"
+msgstr "אישור תקינות כתובת דואר אלקטרוני"
+
+#: logintoboggan.module:401
+msgid "access denied"
+msgstr "אין הרשאה"
+
+#: logintoboggan.module:412;844
+msgid "re-send validation e-mail"
+msgstr "שלח שוב את הודעת הבדיקה לאישור כתובת הדואר האלקטרוני"
+
+#: logintoboggan.module:430
+msgid "LoginToboggan custom login"
+msgstr "כניסה מותאמת של LoginToboggan"
+
+#: logintoboggan.module:436
+msgid "Display the 'logged in' block"
+msgstr "הצג תיבת 'משתמש "
+
+#: logintoboggan.module:440
+msgid "Block type"
+msgstr "סוג תיבה"
+
+#: logintoboggan.module:442
+msgid "Link"
+msgstr "קישור"
+
+#: logintoboggan.module:442
+msgid "Collapsible Form"
+msgstr "טופס מתקפל"
+
+#: logintoboggan.module:445
+msgid "Set a custom message to appear at the top of your login block"
+msgstr "הגדרת הודעה מותאמת אישית שתופיע בראש טופס הכניסה וההרשמה לאתר"
+
+#: logintoboggan.module:474;509
+msgid "Login/Register"
+msgstr "כניסה \ הרשמה"
+
+#: logintoboggan.module:493
+msgid "log out"
+msgstr "יציאה"
+
+#: logintoboggan.module:539
+msgid "disabled"
+msgstr "חסום"
+
+#: logintoboggan.module:540
+msgid "enabled"
+msgstr "מאופשר"
+
+#: logintoboggan.module:543
+msgid "Login"
+msgstr "כניסה"
+
+#: logintoboggan.module:548
+msgid "Allow users to login using their e-mail address"
+msgstr "מאפשר לחברי האתר להיכנס תוך שימוש בכתובת הדואר האלקטרוני שלהם"
+
+#: logintoboggan.module:551
+msgid "Users will be able to enter EITHER their username OR their e-mail address to log in. NOTE: This will disallow users from registering using an e-mail address as their username."
+msgstr "משתמשים  יוכלו להכניס את שם המשתמש או את כתובת הדואר האלקטרוני שלהם לצורך כניסה למערכת. הערה: סימון אפשרות זו יחסום את האפשרות שמשתמשים יוכלו להירשם תוך שימוש בכתובת דואר אלקטרוני בתור הכינוי שלהם."
+
+#: logintoboggan.module:555
+msgid "Registration"
+msgstr "הרשמה"
+
+#: logintoboggan.module:559
+msgid "Use two e-mail fields on registration form"
+msgstr "הצג שני שדות דואר אלקטרוני בטופס ההרשמה"
+
+#: logintoboggan.module:562
+msgid "User will have to type the same e-mail address into both fields. This helps to confirm that they've typed the correct address."
+msgstr "לצורך ההרשמה, הגולש יצטרך לרשום את כתובת הדוא''ל פעמיים. זה עוזר לוודא שהוכנסה כתובת תקינה."
+
+#: logintoboggan.module:566
+msgid "Allow user to set their password during registration"
+msgstr "אפשר לחברי האתר לקבוע את הסיסמה שלהם תוך כדי ההרשמה"
+
+#: logintoboggan.module:568
+msgid "Set password & Immediate login"
+msgstr "קביעת סיסמה וכניסה מיידית לאתר"
+
+#: logintoboggan.module:569
+msgid "This will allow users to choose their initial password when registering.  If 'Set password & Immediate login' is selected, users will be assigned to the role below and logged in immediately. They will not be assigned to the \"authenticated user\" role until they confirm their e-mail address by following the link in their registration e-mail. It is HIGHLY recommended that you set up a \"pre-authorized\" role with limited permissions for this purpose. <br />NOTE: If you enable this feature, you should edit the %settings--more help in writing the e-mail message can be found at %help."
+msgstr ""
+
+#: logintoboggan.module:576
+msgid "Non-authenticated role"
+msgstr "תפקיד שאינו מאושר"
+
+#: logintoboggan.module:579
+msgid "If \"Set password & Immediate login\" is selected, users will be able to login before their e-mail address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the \"authenticated user\" role once they follow the link in their welcome e-mail. <a href=\"%url\">Add new roles</a>."
+msgstr ""
+
+#: logintoboggan.module:584
+msgid "Redirections"
+msgstr "הפניות"
+
+#: logintoboggan.module:591
+msgid "Redirect path on Registration"
+msgstr "עמוד שיוצג עם ההרשמה"
+
+#: logintoboggan.module:593
+msgid "Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. <em>NOTE: this feature will not work if you have the user password creation feature disabled.</em>"
+msgstr ""
+
+#: logintoboggan.module:598
+msgid "Redirect path on Confirmation"
+msgstr "עמוד שיוצג לאחר אישור ההרשמה"
+
+#: logintoboggan.module:600
+msgid "Normally, after a user confirms their new account, they will be taken to their user page. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page."
+msgstr ""
+
+#: logintoboggan.module:604
+msgid "Other"
+msgstr "אחר"
+
+#: logintoboggan.module:619
+msgid "Present login form on access denied (403)"
+msgstr ""
+
+#: logintoboggan.module:622
+msgid "Anonymous users will be presented with a login form along with an access denied message."
+msgstr ""
+
+#: logintoboggan.module:626
+msgid "Display login successful message"
+msgstr "הצג הודעת 'כניסה מוצלחת למערכת'"
+
+#: logintoboggan.module:629
+msgid "If enabled, users will receive a 'Login successful' message upon login."
+msgstr "אם מאופשר, משתמשים יקבלו הודעה 'הכניסה הצליחה' לאחר כניסה מוצלחת לאתר."
+
+#: logintoboggan.module:631
+msgid "None"
+msgstr "ללא"
+
+#: logintoboggan.module:637
+msgid "Minimum password length"
+msgstr "אורך סיסמה מינימלי"
+
+#: logintoboggan.module:640
+msgid "LoginToboggan automatically performs basic password validation for illegal characters. If you would additionally like to have a mimimum password length requirement, select the length here, or set to 'None' for no password length validation."
+msgstr ""
+
+#: logintoboggan.module:678
+msgid "Access Denied / User Login"
+msgstr "אין הרשאה \ כניסה"
+
+#: logintoboggan.module:679
+msgid "Access denied.  You may need to login below or register to access this page."
+msgstr "אין הרשאה. כדי לגשת לעמוד זה, ייתכן שנדרש להירשם או להיכנס לאתר."
+
+#: logintoboggan.module:682
+msgid "Access Denied"
+msgstr "אין הרשאה"
+
+#: logintoboggan.module:690
+msgid "You are not authorized to access this page."
+msgstr "אינך מורשה לגשת לעמוד זה"
+
+#: logintoboggan.module:718
+msgid "You must enter a password."
+msgstr "חובה להכניס סיסמה."
+
+#: logintoboggan.module:719
+msgid "The password cannot contain spaces."
+msgstr "אסור שהסיסמה תכיל רווחים"
+
+#: logintoboggan.module:720;730
+msgid "The password contains an illegal character."
+msgstr "הסיסמה מכילה אות שאינה מותרת."
+
+#: logintoboggan.module:732
+msgid "The password is too long: it must be less than 30 characters."
+msgstr "הסיסמה אורכה מדי: היא חייבת להיות בת פחות מ-30 אותית"
+
+#: logintoboggan.module:759
+msgid "E-mail validation URL used for %name with timestamp %timestamp."
+msgstr "בוצע שימוש בכתובת URL לאישור כתובת דוא''ל עבור %name ב%timestamp."
+
+#: logintoboggan.module:776
+msgid " You will receive full site permissions after your account has been approved by a site administrator."
+msgstr "תקבל\י הרשאות מלאות לאתר לאחר שהחשבון שלך יאושר על ידי מנהל."
+
+#: logintoboggan.module:779
+msgid "You have successfully validated your e-mail address."
+msgstr "כתובת הדואר האלקטרוני אושרה בהצלחה."
+
+#: logintoboggan.module:783
+msgid "Sorry, you can only use your validation link once for security reasons. Please %login with your username and password instead now."
+msgstr "מצטערים, ניתן להשתמש בקישור שקיבלת לצורך אישור החשבון פעם אחת בלבד, מסיבות אבטחה. בבקשה %login עם הכינוי והסיסמה שבחרת."
+
+#: logintoboggan.module:783
+msgid "login"
+msgstr "כניסה"
+
+#: logintoboggan.module:802
+msgid "Session opened for %name."
+msgstr ""
+
+#: logintoboggan.module:840
+msgid "Account validation"
+msgstr "אישור חשבון"
+
+#: logintoboggan.module:849
+msgid "Login successful."
+msgstr "הצלחת להיכנס לאתר."
+
+#: logintoboggan.module:862
+msgid "If required, you may reset your password from: %url"
+msgstr "אם נדרש, תוכל לאתחל מחדש את הסיסמה בכתובת: %url"
+
+#: logintoboggan.module:872
+msgid "A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site."
+msgstr ""
+
+#: logintoboggan.module:218
+msgid "security"
+msgstr "אבטחה"
+
+#: logintoboggan.module:231;304;759;802
+msgid "user"
+msgstr "חבר האתר"
+
+#: logintoboggan.module:0
+msgid "logintoboggan"
+msgstr ""
+
