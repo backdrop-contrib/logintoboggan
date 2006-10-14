@@ -236,7 +236,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
 
   if (array_intersect(array_keys($form_values), array('uid', 'roles', 'init', 'session', 'status'))) {
     watchdog('security', t('Detected malicious attempt to alter protected user fields.'), WATCHDOG_WARNING);
-    drupal_goto('user/register');
+    return 'user/register';
   }
 
   // Set the roles for the new user--it's the pre-auth role if they can pick their own password,
@@ -298,14 +298,14 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
 
   //log the user in if they created the account and immediate login is enabled.
   if($reg_pass_set) {
-    logintoboggan_process_login($account, $redirect);
+    return logintoboggan_process_login($account, $redirect);
   }
 
   //redirect to the appropriate page.
   if ($redirect != '') {
-    drupal_goto($redirect);
+    return $redirect;
   } else {
-    drupal_goto();
+    return;
   }
 }
 
@@ -740,7 +740,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass) {
 
       // And proceed with normal login, going to user page.
       drupal_set_message(t('You have successfully validated your e-mail address.') . $awaiting_approval);
-      logintoboggan_process_login($user, $redirect);
+      drupal_goto(logintoboggan_process_login($user, $redirect));
     }
     else {
       drupal_set_message(t("Sorry, you can only use your validation link once for security reasons. Please !login with your username and password instead now.", array('!login' => l(t('login'),'user/login'))),'error');
@@ -774,15 +774,15 @@ function logintoboggan_process_login($account, $redirect = ''){
   user_module_invoke('login', $edit, $user);
 
   if ($redirect != '') {
-    drupal_goto($redirect);
+    return $redirect;
   }
 
-  drupal_goto('user/'. $user->uid);
- }
+  return 'user/'. $user->uid;
+}
 
- function logintoboggan_eml_validate_url($account){
-   $timestamp = time();
-   return url("user/validate/$account->uid/$timestamp/".logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail), NULL, NULL, TRUE);
+function logintoboggan_eml_validate_url($account){
+  $timestamp = time();
+  return url("user/validate/$account->uid/$timestamp/".logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail), NULL, NULL, TRUE);
 }
 
 function logintoboggan_eml_rehash($password, $timestamp, $mail){
