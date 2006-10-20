@@ -276,7 +276,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
     $mailkey = 'user-register-approval-user';
 
     $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
-    $admin_variables = array('!u' => $account->name, '!validating_url' => logintoboggan_eml_validate_url($account), '!uri' => url("user/$account->uid/edit", NULL, NULL, TRUE));
+    $admin_variables = array('!u' => $account->name, '!validating_url' => logintoboggan_eml_validate_url($account) .'/admin', '!uri' => url("user/$account->uid/edit", NULL, NULL, TRUE));
 
     if ($reg_pass_set) {
       $admin_body = t("!u has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!uri", $admin_variables);
@@ -711,8 +711,8 @@ function logintoboggan_validating_id() {
  * Menu callback; process validate the e-mail address as a one time URL,
  * and redirects to the user page on success.
  */
-function logintoboggan_validate_email($uid, $timestamp, $hashed_pass) {
-  global $user;
+function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 'login') {
+
   $current = time();
   // Some redundant checks for extra security
   if ($timestamp < $current && is_numeric($uid) && $account = user_load(array('uid' => $uid)) ) {
@@ -729,18 +729,32 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass) {
         db_query("DELETE FROM {users_roles} WHERE uid = %d AND rid = %d", $account->uid, logintoboggan_validating_id());
       }
 
-      // Now we can set the new user.
-      $user = $account;
-
       // Where do we redirect after confirming the account?
       $redirect = variable_get('toboggan_redirect_on_confirm', '');
 
-      // If neccessary, alert the user that they still don't have full perms because they are awaiting approval.
-      $awaiting_approval = $account->status ? '' : t(' You will receive full site permissions after your account has been approved by a site administrator.');
+      switch ($action) {
+        // Proceed with normal user login.
+        case 'login':
+          drupal_set_message(t('You have successfully validated your e-mail address.'));
+          drupal_goto(logintoboggan_process_login($account, $redirect));
+          break;
+        // Admin validation.
+        case 'admin':
+          // user has new permissions, so we clear their menu cache
+          cache_clear_all($account->uid .':', 'cache_menu', TRUE);
 
-      // And proceed with normal login, going to user page.
-      drupal_set_message(t('You have successfully validated your e-mail address.') . $awaiting_approval);
-      drupal_goto(logintoboggan_process_login($user, $redirect));
+          drupal_set_message(t('You have successfully validated %user.', array('%user' => $account->name)));
+          drupal_goto("user/$account->uid/edit");
+          break;
+        // Catch all.
+        default:
+          // user has new permissions, so we clear their menu cache
+          cache_clear_all($account->uid .':', 'cache_menu', TRUE);
+
+          drupal_set_message(t('You have successfully validated %user.', array('%user' => $account->name)));
+          drupal_goto('');
+          break;
+      }
     }
     else {
       drupal_set_message(t("Sorry, you can only use your validation link once for security reasons. Please !login with your username and password instead now.", array('!login' => l(t('login'),'user/login'))),'error');
@@ -768,7 +782,7 @@ function logintoboggan_process_login($account, $redirect = ''){
   db_query("UPDATE {users} SET login = '%d' WHERE uid = '%s'", time(), $user->uid);
 
   // user has new permissions, so we clear their menu cache
-  cache_clear_all('menu:'. $user->uid, TRUE);
+  cache_clear_all($user->uid .':', 'cache_menu', TRUE);
 
   $edit = array();
   user_module_invoke('login', $edit, $user);
