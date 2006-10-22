@@ -401,7 +401,7 @@ function logintoboggan_menu($may_cache) {
     //settings page
     $items[] = array(
       'path' => 'admin/user/logintoboggan',
-      'title' => t('logintoboggan'),
+      'title' => t('LoginToboggan'),
       'description' => t('Set up custom login options like instant login, login redirects, pre-authorized validation roles, etc.'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('logintoboggan_main_settings')
@@ -409,7 +409,7 @@ function logintoboggan_menu($may_cache) {
 
     //callback for user validate routine
     $items[] = array('path' => 'user/validate',
-      'title' => t('validate e-mail address'),
+      'title' => t('Validate e-mail address'),
       'callback' => 'logintoboggan_validate_email',
       'access' => TRUE,
       'type' => MENU_CALLBACK,
@@ -419,7 +419,7 @@ function logintoboggan_menu($may_cache) {
     $items[] = array('path' => 'toboggan/denied',
       'access' => TRUE,
       'callback' => 'logintoboggan_denied',
-      'title' => t('access denied'),
+      'title' => t('Access denied'),
       'type' => MENU_CALLBACK,
       );
   }
@@ -430,7 +430,7 @@ function logintoboggan_menu($may_cache) {
 
     //callback for re-sending validation e-mail
     $items[] = array('path' => 'toboggan/revalidate',
-      'title' => t('re-send validation e-mail'),
+      'title' => t('Re-send validation e-mail'),
       'callback' => 'logintoboggan_resend_validation',
       'callback arguments' => array(arg(2)),
       'access' => $user->uid == arg(2),
