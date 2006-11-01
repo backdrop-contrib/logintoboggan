@@ -206,6 +206,11 @@ function logintoboggan_form_alter($form_id, &$form) {
             $form['mail']['#weight'] = -29;
           }
         }
+        if ($pass) {
+          $min_pass = variable_get('toboggan_min_pass_length', 0);
+          $length = $min_pass ? t('between !min and', array('!min' => $min_pass)) : t('no more than');
+          $form['pass']['#description'] = t('Please choose a password for your account; it must be !length 30 characters and spaces are not allowed.', array('!length' => $length));
+        }
       }
       break;
   }
