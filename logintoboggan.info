@@ -1,3 +1,5 @@
 ; $Id$
-name = LoginToboggan
-description = Improves Drupal's login system.
+
+name = "LoginToboggan"
+description = "Improves Drupal's login system."
+version = VERSION
