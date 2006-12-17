@@ -381,14 +381,29 @@ function logintoboggan_init() {
 
   global $user;
 
-  // If it's not an anonymous user, and the user has the pre-auth role, and the pre-auth role
-  // isn't also the auth role, then unset the auth role for this user--they haven't validated yet.
+  // Make sure any user with pre-auth role doesn't have authenticated user role
+  _logintoboggan_user_roles_alter($user);
+}
+
+/**
+ * Alter user roles for loaded user account.
+ *
+ * If user is not an anonymous user, and the user has the pre-auth role, and the pre-auth role
+ * isn't also the auth role, then unset the auth role for this user--they haven't validated yet.
+ *
+ * This alteration is required because sess_read() and user_load() automatically set the
+ * authenticated user role for all non-anonymous users (see http://drupal.org/node/92361).
+ *
+ * @param &$account
+ *    User account to have roles adjusted.
+ */
+function _logintoboggan_user_roles_alter(&$account) {
   $id = logintoboggan_validating_id();
-  $in_pre_auth_role = in_array($id, array_keys($user->roles));
-  if ($user->uid && $in_pre_auth_role) {
-    $user->status = 1;
-    if ($id != 2) {
-      unset($user->roles[2]);
+  $in_pre_auth_role = in_array($id, array_keys($account->roles));
+  if ($account->uid && $in_pre_auth_role) {
+    $account->status = 1;
+    if ($id != DRUPAL_AUTHENTICATED_RID) {
+      unset($account->roles[DRUPAL_AUTHENTICATED_RID]);
     }
   }
 }
@@ -830,6 +845,11 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
     }
   } elseif ($op == 'login' && variable_get('login_successful', 0)) {
     drupal_set_message(t('Login successful.'));
+  }
+  elseif ($op == 'load') {
+    // Just loaded the user into $user_edit.
+    // If the user has the pre-auth role, unset the authenticated role
+    _logintoboggan_user_roles_alter($user_edit);
   }
 }
 
