@@ -303,7 +303,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   drupal_set_message($message);
 
   // where do we need to redirect after registration?
-  $redirect = variable_get('toboggan_redirect_on_register', '');
+  $redirect = _logintoboggan_process_redirect(variable_get('toboggan_redirect_on_register', ''), $account);
 
   //log the user in if they created the account and immediate login is enabled.
   if($reg_pass_set) {
@@ -597,14 +597,14 @@ function logintoboggan_main_settings() {
     '#type' => 'textfield',
     '#title' => t('Redirect path on Registration'),
     '#default_value' => variable_get('toboggan_redirect_on_register', ''),
-    '#description' => t('Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. <em>NOTE: this feature will not work if you have the user password creation feature disabled.</em>'),
+    '#description' => t('Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path. <em>NOTE: this feature will not work if you have the user password creation feature disabled.</em>'),
   );
 
   $form['registration']['redirect']['toboggan_redirect_on_confirm'] = array(
     '#type' => 'textfield',
     '#title' => t('Redirect path on Confirmation'),
     '#default_value' => variable_get('toboggan_redirect_on_confirm', ''),
-    '#description' => t('Normally, after a user confirms their new account, they will be taken to their user page. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page.'),
+    '#description' => t('Normally, after a user confirms their new account, they will be taken to their user page. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path.'),
   );
 
   $form['other'] = array('#type' => 'fieldset',
@@ -753,7 +753,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
       }
 
       // Where do we redirect after confirming the account?
-      $redirect = variable_get('toboggan_redirect_on_confirm', '');
+      $redirect = _logintoboggan_process_redirect(variable_get('toboggan_redirect_on_confirm', ''), $account);
 
       switch ($action) {
         // Proceed with normal user login, as long as it's open registration and their
@@ -888,6 +888,13 @@ function logintoboggan_resend_validation($uid) {
 function _logintoboggan_protocol() {
   return (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http');
 }
+
+function _logintoboggan_process_redirect($redirect, $account) {
+  $variables = array('%uid' => $account->uid);
+  $redirect = strtr($redirect, $variables);
+  
+  return $redirect;
+} 
 
 /**
  * Flips the value of the user_email_settings variable.  This setting is less confusing when it works the opposite
