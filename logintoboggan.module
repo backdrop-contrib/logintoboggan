@@ -404,7 +404,6 @@ function _logintoboggan_user_roles_alter(&$account) {
   $id = logintoboggan_validating_id();
   $in_pre_auth_role = in_array($id, array_keys($account->roles));
   if ($account->uid && $in_pre_auth_role) {
-    $account->status = 1;
     if ($id != DRUPAL_AUTHENTICATED_RID) {
       unset($account->roles[DRUPAL_AUTHENTICATED_RID]);
     }
@@ -757,10 +756,17 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
       $redirect = variable_get('toboggan_redirect_on_confirm', '');
 
       switch ($action) {
-        // Proceed with normal user login.
+        // Proceed with normal user login, as long as it's open registration and their
+        // account hasn't been blocked.
         case 'login':
           drupal_set_message(t('You have successfully validated your e-mail address.'));
-          drupal_goto(logintoboggan_process_login($account, $redirect));
+          if (!$account->status) {
+            drupal_set_message(t('Your account is currently blocked -- login cancelled.'), 'error');
+            drupal_goto('');
+          }
+          else {
+            drupal_goto(logintoboggan_process_login($account, $redirect));
+          }     
           break;
         // Admin validation.
         case 'admin':
