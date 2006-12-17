@@ -229,12 +229,17 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   $from = variable_get('site_mail', ini_get('sendmail_from'));
   $reg_pass_set = !variable_get('user_email_verification', TRUE);
 
-  //If we are allowing user selected passwords then skip the auto-generate function
+  // If we are allowing user selected passwords then skip the auto-generate function
+  // The new user's status should default to the site settings, unless reg_passwd_set == 1 
+  // (immediate login, we are going to assign a pre-auth role), and we want to allow
+  // admin approval accounts access to the site.
   if ($reg_pass_set) {
     $pass = $form_values['pass'];
+    $status = 1;
   }
   else {
     $pass = user_password();
+    $status = variable_get('user_register', 1) == 1; 
   }
 
   // Must unset mail confirmation to prevent it from being saved in the user table's 'data' field.
@@ -250,9 +255,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   $validating_id = logintoboggan_validating_id();
   $roles = ($reg_pass_set && ($validating_id > 2)) ? array($validating_id => 1) : array();
 
-  // Since logintoboggan automatically revokes auth privs from users with the temp role, always set status to 1,
-  // So users waiting for admin approval can have temp role perms.
-  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => $roles, 'status' => 1)));
+  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => $roles, 'status' => $status)));
 
   watchdog('user', t('New user: %name %email.', array('%name' => $name, '%email' => "<$mail>")), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
 
