@@ -64,23 +64,23 @@ function logintoboggan_help($section) {
  */
 function logintoboggan_example_help() {
   $example = t('
-%username,
+!username,
 
-Thank you for registering at %site.
+Thank you for registering at !site.
 
 IMPORTANT:
 For full site access, you will need to click on this link or copy and paste it in your browser:
 
-%login_url
+!login_url
 
 This will verify your account and log you into the site. In the future you will be able to log in using the username and password that you created during registration.
 
-Your new %site membership also enables to you to login to other Drupal powered websites (e.g. http://www.drupal.org/) without registering. Just use the following Drupal ID along with the password you\'ve chosen:
+Your new !site membership also enables to you to login to other Drupal powered websites (e.g. http://www.drupal.org/) without registering. Just use the following Drupal ID along with the password you\'ve chosen:
 
-Drupal ID: %username@%uri_brief
+Drupal ID: !username@!uri_brief
 
 
---  %site team');
+--  !site team');
   $form['foo'] = array(
     '#type' => 'textarea',
     '#default_value' => $example,
