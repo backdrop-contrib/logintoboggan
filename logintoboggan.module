@@ -516,29 +516,35 @@ function theme_lt_loggedinblock(){
 
 function _logintoboggan_toggleboggan ($form) {
 
+  drupal_add_js(_logintoboggan_toggleboggan_js(), 'inline');
+
   $pre = '<div id="toboggan-container" class="toboggan-container">';
   $pre .= '<div class="toboggan-login-link">';
-  $pre .= l(t('Login/Register'), 'user/login', array('onclick' => "toggleboggan('toboggan-login');this.blur();return false;"));
+  $pre .= l(t('Login/Register'), 'user/login', array('onclick' => "toggleboggan();this.blur();return false;"));
   $pre .= '</div>';
 
   //the block that will be toggled
   $pre .= '<div id="toboggan-login" class="user-login-block">';
+
   $form['pre'] = array('#value' => $pre, '#weight' => -300);
-
-  $post .= '</div></div>';
-
-  //javascript toggle function
-  $post .= '<script type="text/javascript">';
-  // <![CDATA[
-  $post .= 'function toggleboggan($id) {';
-  $post .= '$obj = document.getElementById($id);';
-  $post .= '$obj.style.display = ($obj.style.display == \'none\') ? \'block\' : \'none\';}';
-  // for compatibility with non-js browsers:
-  $post .= 'document.getElementById(\'toboggan-login\').style.display = \'none\';';
-  // ]]>
-  $post .= '</script>';
-  $form['post'] = array('#value' => $post, '#weight' => 300);
+  $form['post'] = array('#value' => '</div></div>', '#weight' => 300);
   return $form;
+}
+
+function _logintoboggan_toggleboggan_js() {
+  return '
+  $(function() {
+      if (Drupal.jsEnabled) {
+        $("#toboggan-login").hide();
+      }
+    }
+  );
+  function toggleboggan() {
+    if (Drupal.jsEnabled) {
+      $("#toboggan-login").toggle();
+    }
+  }
+  ';
 }
 
 function logintoboggan_main_settings() {
