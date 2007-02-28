@@ -502,7 +502,7 @@ function logintoboggan_block($op = 'list', $delta = 0, $edit = array()) {
 
 function theme_lt_loggedinblock(){
   global $user;
-  return $user->name .' | ' . l(t('log out'), 'logout');
+  return $user->name .' | ' . l(t('Log out'), 'logout');
 }
 
 /**
