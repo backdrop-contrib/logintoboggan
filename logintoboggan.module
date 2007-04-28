@@ -185,7 +185,6 @@ function logintoboggan_form_alter($form_id, &$form) {
         if ($mail) {
           $form['conf_mail'] = array('#type' => 'textfield',
             '#title' => t('Confirm e-mail address'),
-            '#size' => 30,
             '#weight' => -28,
             '#maxlength' => 64,
             '#description' => t('Please re-type your e-mail address to confirm it is accurate.'),
