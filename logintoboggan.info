@@ -2,4 +2,3 @@
 
 name = "LoginToboggan"
 description = "Improves Drupal's login system."
-version = "$Name$" 
