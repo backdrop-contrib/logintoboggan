@@ -755,6 +755,10 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
       // Remove the pre-auth role from the user, unless they haven't been approved yet.
       if ($account->status) {
         db_query("DELETE FROM {users_roles} WHERE uid = %d AND rid = %d", $account->uid, logintoboggan_validating_id());
+        // Allow other modules to react to email validation by invoking the user update hook.
+        $edit = array();
+        $account->logintoboggan_email_validated = TRUE;
+        user_module_invoke('update', $edit, $account);
       }
 
       // Where do we redirect after confirming the account?
