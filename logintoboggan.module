@@ -881,7 +881,7 @@ function logintoboggan_resend_validation($uid) {
 
   // Variables to replace in e-mail
   $pass = t('If required, you may reset your password from: !url', array('!url' => url('user/password', NULL, NULL, TRUE)));
-  $variables = array('%username' => $account->name, '%site' => variable_get('site_name', 'drupal'), '%password' => $pass, '%uri' => $base_url, '%uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '%mailto' => $account->mail, '%date' => format_date(time()), '%login_uri' => url('user', NULL, NULL, TRUE), '%edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '%login_url' => logintoboggan_eml_validate_url($account));
+  $variables = array('!username' => $account->name, '!site' => variable_get('site_name', 'drupal'), '!password' => $pass, '!uri' => $base_url, '!uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '!mailto' => $account->mail, '!date' => format_date(time()), '!login_uri' => url('user', NULL, NULL, TRUE), '!edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '!login_url' => logintoboggan_eml_validate_url($account));
 
   // Prepare and send e-mail.
   $from = variable_get('site_mail', ini_get('sendmail_from'));
