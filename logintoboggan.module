@@ -144,7 +144,7 @@ function logintoboggan_form_alter($form_id, &$form) {
     case 'user_login_block':
       //Grab the message from settings if there is one to display at the top of the login block.
       if ($login_msg = variable_get('toboggan_block_msg', '')) {
-        $form['message'] = array('#value' => $login_msg,
+        $form['message'] = array('#value' => filter_xss_admin($login_msg),
                              '#weight' => -50,
                            );
       }
@@ -229,7 +229,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   $reg_pass_set = !variable_get('user_email_verification', TRUE);
 
   // If we are allowing user selected passwords then skip the auto-generate function
-  // The new user's status should default to the site settings, unless reg_passwd_set == 1 
+  // The new user's status should default to the site settings, unless reg_passwd_set == 1
   // (immediate login, we are going to assign a pre-auth role), and we want to allow
   // admin approval accounts access to the site.
   if ($reg_pass_set) {
@@ -238,7 +238,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   }
   else {
     $pass = user_password();
-    $status = variable_get('user_register', 1) == 1; 
+    $status = variable_get('user_register', 1) == 1;
   }
 
   // Must unset mail confirmation to prevent it from being saved in the user table's 'data' field.
@@ -501,7 +501,7 @@ function logintoboggan_block($op = 'list', $delta = 0, $edit = array()) {
 
 function theme_lt_loggedinblock(){
   global $user;
-  return $user->name .' | ' . l(t('Log out'), 'logout');
+  return check_plain($user->name) .' | ' . l(t('Log out'), 'logout');
 }
 
 /**
@@ -771,7 +771,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
           }
           else {
             drupal_goto(logintoboggan_process_login($account, $redirect));
-          }     
+          }
           break;
         // Admin validation.
         case 'admin':
@@ -897,9 +897,9 @@ function _logintoboggan_protocol() {
 function _logintoboggan_process_redirect($redirect, $account) {
   $variables = array('%uid' => $account->uid);
   $redirect = strtr($redirect, $variables);
-  
+
   return $redirect;
-} 
+}
 
 /**
  * Flips the value of the user_email_settings variable.  This setting is less confusing when it works the opposite
