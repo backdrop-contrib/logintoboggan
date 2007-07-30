@@ -251,10 +251,13 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
     return 'user/register';
   }
 
-  // Set the roles for the new user--it's the pre-auth role if they can pick their own password,
+  // Set the roles for the new user -- add the pre-auth role if they can pick their own password,
   // and the pre-auth role isn't anon or auth user.
   $validating_id = logintoboggan_validating_id();
-  $roles = ($reg_pass_set && ($validating_id > 2)) ? array($validating_id => 1) : array();
+  $roles = isset($form_values['roles']) ? array_filter($form_values['roles']) : array();
+  if ($reg_pass_set && ($validating_id > 2)) {
+    $roles[$validating_id] = 1;
+  }
 
   $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => $roles, 'status' => $status)));
 
