@@ -96,7 +96,6 @@ Drupal ID: !username@!uri_brief
  * @ingroup logintoboggan_core
  */
 function logintoboggan_form_alter($form_id, &$form) {
-  global $form_values;
   switch ($form_id) {
     case 'block_admin_configure':
       if (($form['module']['#value'] == 'user') && ($form['delta']['#value'] == 0)) {
@@ -175,11 +174,15 @@ function logintoboggan_form_alter($form_id, &$form) {
       break;
 
     case 'user_register':
+      // Admin created account aren't processed by the module.
+      if (user_access('administer users')) {
+        break;
+      }
       $mail = variable_get('email_reg_confirm', 0);
       $pass = !variable_get('user_email_verification', TRUE);
-      if (!user_access('administer users') && ($mail || $pass)) {
+      $form['#submit'] = array('logintoboggan_user_register_submit' => array());
+      if ($mail || $pass) {
         $form['#validate'] += array('logintoboggan_user_register_validate' => array());
-        $form['#submit'] = array('logintoboggan_user_register_submit' => array($form_id, &$form_values));
 
         //Display a confirm e-mail address box if option is enabled.
         if ($mail) {
@@ -607,7 +610,7 @@ function logintoboggan_main_settings() {
     '#type' => 'textfield',
     '#title' => t('Redirect path on Registration'),
     '#default_value' => variable_get('toboggan_redirect_on_register', ''),
-    '#description' => t('Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path. <em>NOTE: this feature will not work if you have the user password creation feature disabled.</em>'),
+    '#description' => t('Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path.'),
   );
 
   $form['registration']['redirect']['toboggan_redirect_on_confirm'] = array(
