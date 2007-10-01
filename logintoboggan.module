@@ -318,11 +318,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   }
 
   //redirect to the appropriate page.
-  if ($redirect != '') {
-    return $redirect;
-  } else {
-    return;
-  }
+  return $redirect;
 }
 
 /**
