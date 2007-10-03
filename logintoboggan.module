@@ -266,7 +266,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
 
   watchdog('user', t('New user: %name %email.', array('%name' => $name, '%email' => "<$mail>")), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
 
-  $login_url = ($reg_pass_set && variable_get('user_register', 1) == 1) ? logintoboggan_eml_validate_url($account) : user_pass_reset_url($account);
+  $login_url = variable_get('user_register', 1) == 1 ? logintoboggan_eml_validate_url($account) : user_pass_reset_url($account);
   $variables = array('!username' => $name, '!site' => variable_get('site_name', 'drupal'), '!password' => $pass, '!uri' => $base_url, '!uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '!mailto' => $mail, '!date' => format_date(time()), '!login_uri' => url('user', NULL, NULL, TRUE), '!edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '!login_url' => $login_url);
 
   //compose the appropriate user message--admin approvals don't require a validation email
@@ -829,6 +829,17 @@ function logintoboggan_process_login($account, $redirect = ''){
 
   $edit = array();
   user_module_invoke('login', $edit, $user);
+
+  // In the special case where a user is validating but they did not create their
+  // own password, redirect them to the user edit page, with a final destination
+  // of the confirmation page, if it exists.
+  if (variable_get('user_email_verification', TRUE)) {
+    watchdog('user', t('User %name used one-time login link at time %timestamp.', array('%name' => $user->name, '%timestamp' => time())));
+    drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to login. Please change your password.'));
+
+    $destination = $redirect ? "destination=$redirect" : NULL;
+    drupal_goto('user/'. $user->uid .'/edit', $destination);
+  }
 
   if ($redirect != '') {
     return $redirect;
