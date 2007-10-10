@@ -233,6 +233,10 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   $from = variable_get('site_mail', ini_get('sendmail_from'));
   $reg_pass_set = !variable_get('user_email_verification', TRUE);
 
+  // Test here for a valid pre-auth -- if the pre-auth is set to the auth user, we
+  // handle things a bit differently.
+  $pre_auth = logintoboggan_validating_id() != DRUPAL_AUTHENTICATED_RID;
+
   // If we are allowing user selected passwords then skip the auto-generate function
   // The new user's status should default to the site settings, unless reg_passwd_set == 1
   // (immediate login, we are going to assign a pre-auth role), and we want to allow
@@ -271,8 +275,12 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
 
   //compose the appropriate user message--admin approvals don't require a validation email
   if($reg_pass_set && variable_get('user_register', 1) == 1) {
-    $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
-
+    if ($pre_auth) {
+      $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
+    }
+    else {
+      $message = '';
+    }
   } else {
     $message = t('Your password and further instructions have been sent to your e-mail address.');
   }
@@ -756,9 +764,15 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
       // And this also makes this hashed password a one-time-only login.
       db_query("UPDATE {users} SET login = '%d' WHERE uid = %d", time(), $account->uid);
 
+      // Test here for a valid pre-auth -- if the pre-auth is set to the auth user, we
+      // handle things a bit differently.
+      $pre_auth = logintoboggan_validating_id() != DRUPAL_AUTHENTICATED_RID;
+
       // Remove the pre-auth role from the user, unless they haven't been approved yet.
       if ($account->status) {
-        db_query("DELETE FROM {users_roles} WHERE uid = %d AND rid = %d", $account->uid, logintoboggan_validating_id());
+        if ($pre_auth) {
+          db_query("DELETE FROM {users_roles} WHERE uid = %d AND rid = %d", $account->uid, logintoboggan_validating_id());
+        }
         // Allow other modules to react to email validation by invoking the user update hook.
         $edit = array();
         $account->logintoboggan_email_validated = TRUE;
@@ -772,7 +786,10 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
         // Proceed with normal user login, as long as it's open registration and their
         // account hasn't been blocked.
         case 'login':
-          drupal_set_message(t('You have successfully validated your e-mail address.'));
+          // Only show the validated message if there's a valid pre-auth role.
+          if ($pre_auth) {
+            drupal_set_message(t('You have successfully validated your e-mail address.'));
+          }
           if (!$account->status) {
             drupal_set_message(t('Your account is currently blocked -- login cancelled.'), 'error');
             drupal_goto('');
