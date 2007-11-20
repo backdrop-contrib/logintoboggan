@@ -24,14 +24,11 @@
  */
 
 /**
- * Implementation of hook_help()
- *
- * @param unknown_type $section
- * @return unknown
+ * Implementation of hook_help().
  */
 
-function logintoboggan_help($section) {
-  switch ($section) {
+function logintoboggan_help($path, $arg) {
+  switch ($path) {
     case 'admin/help#logintoboggan':
       $output = t('<p>The Login Toboggan module improves the Drupal login system by offering the following features:
       <ol>
@@ -95,11 +92,11 @@ Drupal ID: !username@!uri_brief
  *
  * @ingroup logintoboggan_core
  */
-function logintoboggan_form_alter($form_id, &$form) {
+function logintoboggan_form_alter(&$form, $form_state, $form_id) {
   switch ($form_id) {
     case 'block_admin_configure':
       if (($form['module']['#value'] == 'user') && ($form['delta']['#value'] == 0)) {
-        $form['#submit'] += array('logintoboggan_user_block_admin_configure_submit' => array($form));
+        $form['#submit'][] = 'logintoboggan_user_block_admin_configure_submit';
 
         $form['block_settings']['title']['#description'] = t('Override the default title for the block. Use <em>&lt;none&gt;</em> to display no title, or leave blank to use the default block title.<br \><strong>Note:</strong> Logintoboggan module is installed. If you are using one of the custom login block types below, it is recommended that you set this to <em>&lt;none&gt;</em>');
 
@@ -124,15 +121,15 @@ function logintoboggan_form_alter($form_id, &$form) {
       }
       break;
     case 'logintoboggan_main_settings':
-      $form['#submit'] += array('logintoboggan_flip_user_email_verification' => array());
+      $form['#submit'][] = 'logintoboggan_flip_user_email_verification';
       break;
     case 'user_edit':
-      $form['#validate'] += array('logintoboggan_user_edit_validate' => array());
-      $user = user_load(array('uid' => arg(1)));
+      $form['#validate'][] = 'logintoboggan_user_edit_validate';
+      $account = user_load(array('uid' => arg(1)));
       $id = logintoboggan_validating_id();
-      $in_pre_auth_role = in_array($id, array_keys($user->roles));
+      $in_pre_auth_role = in_array($id, array_keys($account->roles));
       // Messages aren't necessary if pre-auth role is authenticated user.
-      if ($in_pre_auth_role && $id != 2) {
+      if ($in_pre_auth_role && user_access('administer users') && $id != DRUPAL_AUTHENTICATED_RID) {
         if ((variable_get('user_register', 1) == 2)) {
           $form['account']['status']['#description'] = t('If this user was created using the "Immediate Login" feature of LoginToboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site\'s pre-authorized role in the "Roles" section below, or they will not receive authenticated user permissions!');
         }
@@ -151,7 +148,8 @@ function logintoboggan_form_alter($form_id, &$form) {
       $form['pass']['#attributes'] = array('tabindex' => '2');
       $form['submit']['#attributes'] = array('tabindex' => '3');
       if (variable_get('login_with_mail', 0)) {
-        $form['#validate'] = array('logintoboggan_user_login_validate' => array()) + $form['#validate'];
+        // LT's validation function must run first.
+        $form['#validate'] = array('logintoboggan_user_login_validate') + $form['#validate'];
         $form['name']['#title'] = t('Username or e-mail address');
         if (variable_get('drupal_authentication_service', FALSE) && count(user_auth_help_links()) > 0) {
           $form['name']['#description'] = t('Enter your %s username, e-mail address, or an ID from one of our affiliates: !a.', array('%s' => variable_get('site_name', 'local'), '!a' => implode(', ', user_auth_help_links())));
@@ -164,7 +162,7 @@ function logintoboggan_form_alter($form_id, &$form) {
       if (($form_id == 'user_login_block')) {
         $block_type = variable_get('toboggan_block_type', 1);
         if ($block_type == 1) {
-          $form = array('#value' => l(t('Login/Register'), 'user/login', array(), drupal_get_destination()));
+          $form = array('#value' => l(t('Login/Register'), 'user/login', array('query' => drupal_get_destination())));
         }
         elseif ($block_type == 2) {
           $form  = _logintoboggan_toggleboggan($form);
@@ -180,9 +178,16 @@ function logintoboggan_form_alter($form_id, &$form) {
       }
       $mail = variable_get('email_reg_confirm', 0);
       $pass = !variable_get('user_email_verification', TRUE);
-      $form['#submit'] = array('logintoboggan_user_register_submit' => array());
+
+      // Replace core's registration function with LT's registration function.
+      $key = array_search('user_register_submit', $form['#submit']);
+      if ($key !== FALSE) {
+        unset($form['#submit'][$key]);
+      }
+      $form['#submit'][] = 'logintoboggan_user_register_submit';
+
       if ($mail || $pass) {
-        $form['#validate'] += array('logintoboggan_user_register_validate' => array());
+        $form['#validate'][] = 'logintoboggan_user_register_validate';
 
         //Display a confirm e-mail address box if option is enabled.
         if ($mail) {
@@ -225,11 +230,9 @@ function logintoboggan_form_alter($form_id, &$form) {
  *
  * @ingroup logintoboggan_form
  */
-function logintoboggan_user_register_submit($form_id, $form_values) {
-  global $base_url;
+function logintoboggan_user_register_submit($form, &$form_state) {
+  global $base_url, $language;
 
-  $mail = $form_values['mail'];
-  $name = $form_values['name'];
   $from = variable_get('site_mail', ini_get('sendmail_from'));
   $reg_pass_set = !variable_get('user_email_verification', TRUE);
 
@@ -242,7 +245,7 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   // (immediate login, we are going to assign a pre-auth role), and we want to allow
   // admin approval accounts access to the site.
   if ($reg_pass_set) {
-    $pass = $form_values['pass'];
+    $pass = $form_state['values']['pass'];
     $status = 1;
   }
   else {
@@ -251,27 +254,32 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   }
 
   // Must unset mail confirmation to prevent it from being saved in the user table's 'data' field.
-  if (isset($form_values['conf_mail'])) { unset($form_values['conf_mail']); }
+  if (isset($form_state['values']['conf_mail'])) { unset($form_state['values']['conf_mail']); }
 
-  if (array_intersect(array_keys($form_values), array('uid', 'roles', 'init', 'session', 'status'))) {
-    watchdog('security', t('Detected malicious attempt to alter protected user fields.'), WATCHDOG_WARNING);
+  if (array_intersect(array_keys($form_state['values']), array('uid', 'roles', 'init', 'session', 'status'))) {
+    watchdog('security', 'Detected malicious attempt to alter protected user fields.', array(), WATCHDOG_WARNING);
     return 'user/register';
   }
 
   // Set the roles for the new user -- add the pre-auth role if they can pick their own password,
   // and the pre-auth role isn't anon or auth user.
   $validating_id = logintoboggan_validating_id();
-  $roles = isset($form_values['roles']) ? array_filter($form_values['roles']) : array();
-  if ($reg_pass_set && ($validating_id > 2)) {
+  $roles = isset($form_state['values']['roles']) ? array_filter($form_state['values']['roles']) : array();
+  if ($reg_pass_set && ($validating_id > DRUPAL_AUTHENTICATED_RID)) {
     $roles[$validating_id] = 1;
   }
 
-  $account = user_save('', array_merge($form_values, array('pass' => $pass, 'init' => $mail, 'roles' => $roles, 'status' => $status)));
+  $account = user_save('', array_merge($form_state['values'], array('pass' => $pass, 'init' => $form_state['values']['mail'], 'roles' => $roles, 'status' => $status)));
+  $account->password = $pass;
 
-  watchdog('user', t('New user: %name %email.', array('%name' => $name, '%email' => "<$mail>")), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
+  watchdog('user', 'New user: %name %email.', array('%name' => $account->name, '%email' => "<$account->mail>"), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
 
   $login_url = variable_get('user_register', 1) == 1 ? logintoboggan_eml_validate_url($account) : user_pass_reset_url($account);
-  $variables = array('!username' => $name, '!site' => variable_get('site_name', 'drupal'), '!password' => $pass, '!uri' => $base_url, '!uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '!mailto' => $mail, '!date' => format_date(time()), '!login_uri' => url('user', NULL, NULL, TRUE), '!edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '!login_url' => $login_url);
+
+  $tokens = user_mail_tokens($account, $language);
+  // Customize special tokens.
+  $tokens['!uri_brief'] = substr($base_url, strlen(_logintoboggan_protocol() .'://'));
+  $tokens['!login_url'] = $login_url;
 
   //compose the appropriate user message--admin approvals don't require a validation email
   if($reg_pass_set && variable_get('user_register', 1) == 1) {
@@ -288,45 +296,46 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
   if (variable_get('user_register', 1) == 1) {
 
     // Create new user account, no administrator approval required.
-    $subject = _user_mail_text('welcome_subject', $variables);
-    $body = _user_mail_text('welcome_body', $variables);
+    $subject = _user_mail_text('welcome_subject', $tokens);
+    $body = _user_mail_text('welcome_body', $tokens);
     $mailkey = 'user-register-welcome';
 
   } elseif (variable_get('user_register', 1) == 2) {
 
     // Create new user account, administrator approval required.
-    $subject = _user_mail_text('approval_subject', $variables);
-    $body = _user_mail_text('approval_body', $variables);
+    $subject = _user_mail_text('approval_subject', $tokens);
+    $body = _user_mail_text('approval_body', $tokens);
     $mailkey = 'user-register-approval-user';
 
     $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
-    $admin_variables = array('!u' => $account->name, '!validating_url' => logintoboggan_eml_validate_url($account) .'/admin', '!uri' => url("user/$account->uid/edit", NULL, NULL, TRUE));
 
     if ($reg_pass_set) {
-      $admin_body = t("!u has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!uri", $admin_variables);
+      $admin_tokens = array('!validating_url' => logintoboggan_eml_validate_url($account) .'/admin') + $tokens;
+      $admin_body = t("!username has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!uri", $admin_tokens);
     }
     else {
-      $admin_body =t("!u has applied for an account.\n\n!uri", $admin_variables);
+      $admin_body =t("!username has applied for an account.\n\n!uri", $tokens);
     }
     drupal_mail('user-register-approval-admin', $from, $subject, $admin_body, $from);
 
   }
 
   //mail the user.
-  drupal_mail($mailkey, $mail, $subject, $body, $from);
+  drupal_mail($mailkey, $account->mail, $subject, $body, $from);
 
   drupal_set_message($message);
 
   // where do we need to redirect after registration?
   $redirect = _logintoboggan_process_redirect(variable_get('toboggan_redirect_on_register', ''), $account);
 
-  //log the user in if they created the account and immediate login is enabled.
+  // Log the user in if they created the account and immediate login is enabled.
   if($reg_pass_set) {
-    return logintoboggan_process_login($account, $redirect);
+    $form_state['redirect'] = logintoboggan_process_login($account, $redirect);
   }
-
-  //redirect to the appropriate page.
-  return $redirect;
+  else {
+    // Redirect to the appropriate page.
+    $form_state['redirect'] = $redirect;
+  }
 }
 
 /**
@@ -334,10 +343,10 @@ function logintoboggan_user_register_submit($form_id, $form_values) {
  *
  * @ingroup logintoboggan_form
  */
-function logintoboggan_user_login_validate($form_id, $form_values, $form) {
-  if (isset($form_values['name'])) {
-    if ($name = db_result(db_query("SELECT name FROM {users} WHERE LOWER(mail) = LOWER('%s')", $form_values['name']))) {
-      form_set_value($form['name'], $name);
+function logintoboggan_user_login_validate($form, &$form_state) {
+  if (isset($form_state['values']['name'])) {
+    if ($name = db_result(db_query("SELECT name FROM {users} WHERE LOWER(mail) = LOWER('%s')", $form_state['values']['name']))) {
+      form_set_value($form['name'], $name, $form_state);
     }
   }
 }
@@ -347,24 +356,24 @@ function logintoboggan_user_login_validate($form_id, $form_values, $form) {
  *
  * @ingroup logintoboggan_form
  */
-function logintoboggan_user_register_validate($form_id, $form_values) {
+function logintoboggan_user_register_validate($form, &$form_state) {
   if (variable_get('login_with_mail', 0)) {
     // check that it's not an e-mail
-    if (db_num_rows(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s')", $form_values['name'])) > 0) {
+    if (db_result(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s') AND uid <> 0", $form_state['values']['name']))) {
       form_set_error('name', t('This e-mail address has already been taken by another user.'));
     }
   }
 
   //Check to see whether our e-mail address matches the confirm address if enabled.
   if (variable_get('email_reg_confirm', 0)) {
-    if ($form_values['mail'] != $form_values['conf_mail']) {
+    if ($form_state['values']['mail'] != $form_state['values']['conf_mail']) {
       form_set_error('conf_mail', t('Your e-mail address and confirmed e-mail address must match.'));
     }
   }
 
   //Do some password validation if password selection is enabled.
   if (!variable_get('user_email_verification', TRUE)) {
-    $pass_err = logintoboggan_validate_pass($form_values['pass']);
+    $pass_err = logintoboggan_validate_pass($form_state['values']['pass']);
     if ($pass_err) {
       form_set_error('pass', $pass_err);
     }
@@ -376,10 +385,10 @@ function logintoboggan_user_register_validate($form_id, $form_values) {
  *
  * @ingroup logintoboggan_form
  */
-function logintoboggan_user_edit_validate($form_id, $form_values) {
-  if (strlen($form_values['pass'])) {
+function logintoboggan_user_edit_validate($form, &$form_state) {
+  if (strlen($form_state['values']['pass'])) {
     // if we're changing the password, validate it
-    $pass_err = logintoboggan_validate_pass($form_values['pass']);
+    $pass_err = logintoboggan_validate_pass($form_state['values']['pass']);
     if ($pass_err) {
       form_set_error('pass', $pass_err);
     }
@@ -392,11 +401,13 @@ function logintoboggan_user_edit_validate($form_id, $form_values) {
  * @ingroup logintoboggan_core
  */
 function logintoboggan_init() {
-
   global $user;
 
   // Make sure any user with pre-auth role doesn't have authenticated user role
   _logintoboggan_user_roles_alter($user);
+
+  // Add custom css.
+  drupal_add_css(drupal_get_path('module', 'logintoboggan') .'/logintoboggan.css');
 }
 
 /**
@@ -426,60 +437,78 @@ function _logintoboggan_user_roles_alter(&$account) {
  *
  * @ingroup logintoboggan_core
  */
-function logintoboggan_menu($may_cache) {
-  global $user;
+function logintoboggan_menu() {
   $items = array();
-  if ($may_cache) {
 
-    //settings page
-    $items[] = array(
-      'path' => 'admin/user/logintoboggan',
-      'title' => t('LoginToboggan'),
-      'description' => t('Set up custom login options like instant login, login redirects, pre-authorized validation roles, etc.'),
-      'callback' => 'drupal_get_form',
-      'callback arguments' => array('logintoboggan_main_settings')
-      );
+  // Settings page.
+  $items['admin/user/logintoboggan'] = array(
+    'title' => 'LoginToboggan',
+    'description' => 'Set up custom login options like instant login, login redirects, pre-authorized validation roles, etc.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('logintoboggan_main_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+  );
 
-    //callback for user validate routine
-    $items[] = array('path' => 'user/validate',
-      'title' => t('Validate e-mail address'),
-      'callback' => 'logintoboggan_validate_email',
-      'access' => TRUE,
-      'type' => MENU_CALLBACK,
-      );
+  // Callback for user validate routine.
+  $items['user/validate'] = array(
+    'title' => 'Validate e-mail address',
+    'page callback' => 'logintoboggan_validate_email',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
 
-    //callback for handling access denied redirection
-    $items[] = array('path' => 'toboggan/denied',
-      'access' => TRUE,
-      'callback' => 'logintoboggan_denied',
-      'title' => t('Access denied'),
-      'type' => MENU_CALLBACK,
-      );
-  }
-  else {
+  // Callback for handling access denied redirection.
+  $items['toboggan/denied'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'logintoboggan_denied',
+    'title' => 'Access denied',
+    'type' => MENU_CALLBACK,
+  );
 
-    // add custom css for the block
-    drupal_add_css(drupal_get_path('module', 'logintoboggan') .'/logintoboggan.css');
+  //callback for re-sending validation e-mail
+  $items['toboggan/revalidate'] = array(
+    'title' => 'Re-send validation e-mail',
+    'page callback' => 'logintoboggan_resend_validation',
+    'page arguments' => array(2),
+    'access callback' => 'logintoboggan_revalidate_access',
+    'access arguments' => array(2),
+    'type' => MENU_CALLBACK,
+  );
 
-    //callback for re-sending validation e-mail
-    $items[] = array('path' => 'toboggan/revalidate',
-      'title' => t('Re-send validation e-mail'),
-      'callback' => 'logintoboggan_resend_validation',
-      'callback arguments' => array(arg(2)),
-      'access' => $user->uid == arg(2),
-      'type' => MENU_CALLBACK,
-      );
-  }
   return $items;
+}
+
+/**
+ * Access check for user revalidation.
+ */
+function logintoboggan_revalidate_access($uid) {
+  global $user;
+
+  return $user->uid == $uid;
+}
+
+/**
+ * Implemenation of hook_theme().
+ */
+function logintoboggan_theme() {
+  return array(
+    'lt_access_denied' => array(
+      'arguments' => array(),
+    ),
+    'lt_loggedinblock' => array(
+      'arguments' => array(),
+    ),
+  );
 }
 
 /**
  * @defgroup logintoboggan_block Functions for LoginToboggan blocks.
  */
 
-function logintoboggan_user_block_admin_configure_submit($form_id, $form_values) {
-  variable_set('toboggan_block_type', $form_values['toboggan_block_type']);
-  variable_set('toboggan_block_msg', $form_values['toboggan_block_msg']);
+function logintoboggan_user_block_admin_configure_submit($form, &$form_state) {
+  variable_set('toboggan_block_type', $form_state['values']['toboggan_block_type']);
+  variable_set('toboggan_block_msg', $form_state['values']['toboggan_block_msg']);
 }
 
 /**
@@ -491,6 +520,7 @@ function logintoboggan_block($op = 'list', $delta = 0, $edit = array()) {
   switch ($op) {
     case 'list' :
       $blocks[0]['info'] = t('LoginToboggan logged in block');
+      $blocks[0]['cache'] = BLOCK_NO_CACHE;
       return $blocks;
       break;
     case 'view' :
@@ -545,15 +575,11 @@ function _logintoboggan_toggleboggan ($form) {
 function _logintoboggan_toggleboggan_js() {
   return '
   $(function() {
-      if (Drupal.jsEnabled) {
-        $("#toboggan-login").hide();
-      }
+      $("#toboggan-login").hide();
     }
   );
   function toggleboggan() {
-    if (Drupal.jsEnabled) {
-      $("#toboggan-login").toggle();
-    }
+    $("#toboggan-login").toggle();
   }
   ';
 }
@@ -759,7 +785,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
     // No time out for first time login.
     if ($account->uid && !empty($account) && $timestamp < $current &&
         $hashed_pass == logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail)) {
-      watchdog('user', t('E-mail validation URL used for %name with timestamp @timestamp.', array('%name' => $account->name, '@timestamp' => $timestamp)));
+      watchdog('user', 'E-mail validation URL used for %name with timestamp @timestamp.', array('%name' => $account->name, '@timestamp' => $timestamp));
       // Update the user table noting user has logged in.
       // And this also makes this hashed password a one-time-only login.
       db_query("UPDATE {users} SET login = '%d' WHERE uid = %d", time(), $account->uid);
@@ -836,10 +862,10 @@ function logintoboggan_process_login($account, $redirect = ''){
   global $user;
   $user = $account;
 
-  watchdog('user', t('Session opened for %name.', array('%name' => $user->name)));
+  watchdog('user', 'Session opened for %name.', array('%name' => $user->name));
 
   // Update the user table timestamp noting user has logged in.
-  db_query("UPDATE {users} SET login = '%d' WHERE uid = '%s'", time(), $user->uid);
+  db_query("UPDATE {users} SET login = %d WHERE uid = %d", time(), $user->uid);
 
   // user has new permissions, so we clear their menu cache
   cache_clear_all($user->uid .':', 'cache_menu', TRUE);
@@ -851,7 +877,7 @@ function logintoboggan_process_login($account, $redirect = ''){
   // own password, redirect them to the user edit page, with a final destination
   // of the confirmation page, if it exists.
   if (variable_get('user_email_verification', TRUE)) {
-    watchdog('user', t('User %name used one-time login link at time %timestamp.', array('%name' => $user->name, '%timestamp' => time())));
+    watchdog('user', 'User %name used one-time login link at time %timestamp.', array('%name' => $user->name, '%timestamp' => time()));
     drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to login. Please change your password.'));
 
     $destination = $redirect ? "destination=$redirect" : NULL;
@@ -867,7 +893,7 @@ function logintoboggan_process_login($account, $redirect = ''){
 
 function logintoboggan_eml_validate_url($account){
   $timestamp = time();
-  return url("user/validate/$account->uid/$timestamp/".logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail), NULL, NULL, TRUE);
+  return url("user/validate/$account->uid/$timestamp/". logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail), array('absolute' => TRUE));
 }
 
 function logintoboggan_eml_rehash($password, $timestamp, $mail){
@@ -907,18 +933,20 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
  * Re-sends validation e-mail to user specified by $uid.
  */
 function logintoboggan_resend_validation($uid) {
-  global $base_url;
+  global $base_url, $language;
 
   $account = user_load(array('uid' => $uid));
+  $account->password = t('If required, you may reset your password from: !url', array('!url' => url('user/password', array('absolute' => TRUE))));
 
-  // Variables to replace in e-mail
-  $pass = t('If required, you may reset your password from: !url', array('!url' => url('user/password', NULL, NULL, TRUE)));
-  $variables = array('!username' => $account->name, '!site' => variable_get('site_name', 'drupal'), '!password' => $pass, '!uri' => $base_url, '!uri_brief' => substr($base_url, strlen(_logintoboggan_protocol() .'://')), '!mailto' => $account->mail, '!date' => format_date(time()), '!login_uri' => url('user', NULL, NULL, TRUE), '!edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '!login_url' => logintoboggan_eml_validate_url($account));
+  $tokens = user_mail_tokens($account, $language);
+  // Customize special tokens.
+  $tokens['!uri_brief'] = substr($base_url, strlen(_logintoboggan_protocol() .'://'));
+  $tokens['!login_url'] = logintoboggan_eml_validate_url($account);
 
   // Prepare and send e-mail.
   $from = variable_get('site_mail', ini_get('sendmail_from'));
-  $subject = _user_mail_text('welcome_subject', $variables);
-  $body = _user_mail_text('welcome_body', $variables);
+  $subject = _user_mail_text('welcome_subject', $tokens);
+  $body = _user_mail_text('welcome_body', $tokens);
   drupal_mail('logintoboggan-resend-validation', $account->mail, $subject, $body, $from);
 
   // Notify user that e-mail was sent and return to user edit form.
@@ -940,11 +968,8 @@ function _logintoboggan_process_redirect($redirect, $account) {
 /**
  * Flips the value of the user_email_settings variable.  This setting is less confusing when it works the opposite
  * of it's current core behavior.
- *
- * @param $form_id ID of the submitted form.
- * @param $form_values Submitted form values.
  */
-function logintoboggan_flip_user_email_verification($form_id, $form_values) {
-  $value = $form_values['user_email_verification'] ? FALSE : TRUE;
+function logintoboggan_flip_user_email_verification($form, &$form_state) {
+  $value = $form_state['values']['user_email_verification'] ? FALSE : TRUE;
   variable_set('user_email_verification', $value);
 }

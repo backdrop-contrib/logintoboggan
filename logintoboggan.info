@@ -2,3 +2,4 @@
 
 name = "LoginToboggan"
 description = "Improves Drupal's login system."
+core = "6.x"
