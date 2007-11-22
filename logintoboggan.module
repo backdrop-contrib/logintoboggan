@@ -489,6 +489,8 @@ function logintoboggan_revalidate_access($uid) {
 
 /**
  * Implemenation of hook_theme().
+ *
+ * @ingroup logintoboggan_core
  */
 function logintoboggan_theme() {
   return array(
