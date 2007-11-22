@@ -3,18 +3,16 @@
 
 /**
  * @todo
- * _ Configurable text for theme_lt_access_denied()
  *
+ * _ Configurable text for theme_lt_access_denied()
  * _ clean up variable names
- * _ unify the password page to just one field
- * _ test with Drupal's distributed authentication (drupal.module)
  *
  */
 
 /**
  * @wishlist
+ *
  * _ password complexity testing option
- * _ options for minimum/maximum username/password length
  * _ setting to expire unverified accounts and purge them from system
  *
  */
