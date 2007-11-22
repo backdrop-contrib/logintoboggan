@@ -28,23 +28,23 @@
 function logintoboggan_help($path, $arg) {
   switch ($path) {
     case 'admin/help#logintoboggan':
-      $output = t('<p>The Login Toboggan module improves the Drupal login system by offering the following features:
+      $output = t("<p>The Login Toboggan module improves the Drupal login system by offering the following features:
       <ol>
       <li>Allow users to login using either their username OR their e-mail address.</li>
       <li>Allow users to define their own password during registration.</li>
       <li>Allow users to login immediately.</li>
       <li>Provide a login form on Access Denied pages for non-logged-in (anonymous) users.</li>
-      <li>The module provides two login block options: One uses JavaScript to display the form within the block immediately upon clicking "log in". The other brings the user to a separate page, but returns the user to their original page upon login.</li>
+      <li>The module provides two login block options: One uses JavaScript to display the form within the block immediately upon clicking 'log in'. The other brings the user to a separate page, but returns the user to their original page upon login.</li>
       <li>Customize the registration form with two e-mail fields to ensure accuracy.</li>
-      <li>Optionally redirect the user to a specific page when using the \'immediate login\' feature.</li>
+      <li>Optionally redirect the user to a specific page when using the 'Immediate login' feature.</li>
       <li>Optionally redirect the user to a specific page upon validation of their e-mail address.</li>
       <li>Optionally display a user message indicating a successful login.</li>
       </ol>
-      These features may be turned on or off in the Login Toboggan <a href="%url">settings</a>.</p>
-      <p>Because this module completely reorients the Drupal login process you will probably want to edit the welcome e-mail on the user settings page. For instance if you have enabled the "Set password & Immediate Login" option, you probably should not send the user\'s password out in the welcome e-mail (also note when the "Set password & Immediate Login" option is enabled, the %login_url becomes a verification url that the user MUST visit in order to enable authenticated status). The following is an example welcome e-mail:</p>
-      ', array('%url' => url('admin/user/logintoboggan')));
+      These features may be turned on or off in the Login Toboggan <a href=\"!url\">settings</a>.</p>
+      <p>Because this module completely reorients the Drupal login process you will probably want to edit the welcome e-mail on the user settings page. For instance if you have enabled the 'Set password & Immediate Login' option, you probably should not send the user's password out in the welcome e-mail (also note when the 'Set password & Immediate Login' option is enabled, the !login_url becomes a verification url that the user MUST visit in order to enable authenticated status). The following is an example welcome e-mail:</p>
+      ", array('!url' => url('admin/user/logintoboggan')));
       $output .= drupal_get_form('logintoboggan_example_help');
-      $output .= t('<p>Note that if you have set the "Visitors can create accounts but administrator approval is required" option for account approval, and are also using the "Set password & Immediate Login" feature of LoginToboggan, the user will immediately receive the permissions of the pre-authorized user role--you may wish to create a pre-authorized role with the exact same permissions as the anonymous user if you wish the newly created user to only have anonymous permissions.</p><p>In order for a site administrator to unblock a user who is awaiting administrator approval, they must either click on the validation link they receive in their notification e-mail, or manually remove the user from the site\'s pre-authorized role--afterwards the user will then receive "authenticated user" permissions (if you are using the "Visitors can create accounts and no administrator approval is required" option, removal of the pre-authorized role will happen automatically when the user validates their account via e-mail).</p><p>Also be aware that LoginToboggan only affects registrations initiated by users--any user account created by an administrator will not use any LoginToboggan functionality.');
+      $output .= t("<p>Note that if you have set the 'Visitors can create accounts but administrator approval is required' option for account approval, and are also using the 'Set password & Immediate Login' feature of LoginToboggan, the user will immediately receive the permissions of the pre-authorized user role -- you may wish to create a pre-authorized role with the exact same permissions as the anonymous user if you wish the newly created user to only have anonymous permissions.</p><p>In order for a site administrator to unblock a user who is awaiting administrator approval, they must either click on the validation link they receive in their notification e-mail, or manually remove the user from the site's pre-authorized role -- afterwards the user will then receive 'authenticated user' permissions. In either case, the user will receive an account activated e-mail if it's enabled on the user settings page -- it's recommended that you edit the default text of the activation e-mail to match LoginToboggan's workflow as described. </p><p>If you are using the 'Visitors can create accounts and no administrator approval is required' option, removal of the pre-authorized role will happen automatically when the user validates their account via e-mail.</p><p>Also be aware that LoginToboggan only affects registrations initiated by users--any user account created by an administrator will not use any LoginToboggan functionality.");
       return $output;
       break;
     case 'admin/user/logintoboggan':
@@ -69,11 +69,6 @@ For full site access, you will need to click on this link or copy and paste it i
 !login_url
 
 This will verify your account and log you into the site. In the future you will be able to log in using the username and password that you created during registration.
-
-Your new !site membership also enables to you to login to other Drupal powered websites (e.g. http://www.drupal.org/) without registering. Just use the following Drupal ID along with the password you\'ve chosen:
-
-Drupal ID: !username@!uri_brief
-
 
 --  !site team');
   $form['foo'] = array(
@@ -121,7 +116,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
     case 'logintoboggan_main_settings':
       $form['#submit'][] = 'logintoboggan_flip_user_email_verification';
       break;
-    case 'user_edit':
+    case 'user_profile_form':
       $form['#validate'][] = 'logintoboggan_user_edit_validate';
       $account = user_load(array('uid' => arg(1)));
       $id = logintoboggan_validating_id();
@@ -230,9 +225,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
  * @ingroup logintoboggan_form
  */
 function logintoboggan_user_register_submit($form, &$form_state) {
-  global $base_url, $language;
 
-  $from = variable_get('site_mail', ini_get('sendmail_from'));
   $reg_pass_set = !variable_get('user_email_verification', TRUE);
 
   // Test here for a valid pre-auth -- if the pre-auth is set to the auth user, we
@@ -257,8 +250,12 @@ function logintoboggan_user_register_submit($form, &$form_state) {
 
   if (array_intersect(array_keys($form_state['values']), array('uid', 'roles', 'init', 'session', 'status'))) {
     watchdog('security', 'Detected malicious attempt to alter protected user fields.', array(), WATCHDOG_WARNING);
-    return 'user/register';
+    $form_state['redirect'] = 'user/register';
+    return;
   }
+
+  // The unset below is needed to prevent these form values from being saved as user data.
+  unset($form_state['values']['form_token'], $form_state['values']['submit'], $form_state['values']['op'], $form_state['values']['notify'], $form_state['values']['form_id'], $form_state['values']['form_build_id'], $form_state['values']['affiliates'], $form_state['values']['destination']);
 
   // Set the roles for the new user -- add the pre-auth role if they can pick their own password,
   // and the pre-auth role isn't anon or auth user.
@@ -269,18 +266,15 @@ function logintoboggan_user_register_submit($form, &$form_state) {
   }
 
   $account = user_save('', array_merge($form_state['values'], array('pass' => $pass, 'init' => $form_state['values']['mail'], 'roles' => $roles, 'status' => $status)));
+  // Add plain text password into user account to generate mail tokens.
   $account->password = $pass;
+  $form_state['user'] = $account;
 
-  watchdog('user', 'New user: %name %email.', array('%name' => $account->name, '%email' => "<$account->mail>"), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
+  watchdog('user', 'New user: %name (%email).', array('%name' => $account->name, '%email' => $account->mail), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
 
-  $login_url = variable_get('user_register', 1) == 1 ? logintoboggan_eml_validate_url($account) : user_pass_reset_url($account);
+  $login_url = variable_get('user_register', 1) == 1 ? logintoboggan_eml_validate_url($account) : NULL;
 
-  $tokens = user_mail_tokens($account, $language);
-  // Customize special tokens.
-  $tokens['!uri_brief'] = substr($base_url, strlen(_logintoboggan_protocol() .'://'));
-  $tokens['!login_url'] = $login_url;
-
-  //compose the appropriate user message--admin approvals don't require a validation email
+  // Compose the appropriate user message--admin approvals don't require a validation email.
   if($reg_pass_set && variable_get('user_register', 1) == 1) {
     if ($pre_auth) {
       $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
@@ -295,32 +289,18 @@ function logintoboggan_user_register_submit($form, &$form_state) {
   if (variable_get('user_register', 1) == 1) {
 
     // Create new user account, no administrator approval required.
-    $subject = _user_mail_text('welcome_subject', $tokens);
-    $body = _user_mail_text('welcome_body', $tokens);
-    $mailkey = 'user-register-welcome';
+    $mailkey = 'register_no_approval_required';
 
   } elseif (variable_get('user_register', 1) == 2) {
 
     // Create new user account, administrator approval required.
-    $subject = _user_mail_text('approval_subject', $tokens);
-    $body = _user_mail_text('approval_body', $tokens);
-    $mailkey = 'user-register-approval-user';
+    $mailkey = 'register_pending_approval';
 
     $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
-
-    if ($reg_pass_set) {
-      $admin_tokens = array('!validating_url' => logintoboggan_eml_validate_url($account) .'/admin') + $tokens;
-      $admin_body = t("!username has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!uri", $admin_tokens);
-    }
-    else {
-      $admin_body =t("!username has applied for an account.\n\n!uri", $tokens);
-    }
-    drupal_mail('user-register-approval-admin', $from, $subject, $admin_body, $from);
-
   }
 
-  //mail the user.
-  drupal_mail($mailkey, $account->mail, $subject, $body, $from);
+  // Mail the user.
+  _logintoboggan_mail_notify($mailkey, $account, $login_url);
 
   drupal_set_message($message);
 
@@ -614,7 +594,7 @@ function logintoboggan_main_settings(&$form_state) {
   $form['registration']['user_email_verification'] = array('#type' => 'checkbox',
     '#title' => t('Set password & Immediate login'),
     '#default_value' => !variable_get('user_email_verification', TRUE) ? 1 : 0,
-    '#description' => t('This will allow users to choose their initial password when registering.  If \'Set password & Immediate login\' is selected, users will be assigned to the role below and logged in immediately. They will not be assigned to the "authenticated user" role until they confirm their e-mail address by following the link in their registration e-mail. It is HIGHLY recommended that you set up a "pre-authorized" role with limited permissions for this purpose. <br />NOTE: If you enable this feature, you should edit the !settings--more help in writing the e-mail message can be found at !help.', array('!settings' => l('user e-mail welcome message', 'admin/user/settings'), '!help' => l('LoginToboggan help', 'admin/help/logintoboggan'))),
+    '#description' => t("This will allow users to choose their initial password when registering.  If 'Set password & Immediate login' is selected, users will be assigned to the role below and logged in immediately. They will not be assigned to the 'authenticated user' role until they confirm their e-mail address by following the link in their registration e-mail. It is HIGHLY recommended that you set up a 'pre-authorized' role with limited permissions for this purpose. <br />NOTE: If you enable this feature, you should edit the <a href=\"!settings\">Welcome, no approval required</a> text -- more help in writing the e-mail message can be found at <a href=\"!help\">LoginToboggan help</a>.", array('!settings' => url('admin/user/settings'), '!help' => url('admin/help/logintoboggan'))),
     );
 
   // Grab the roles that can be used for pre-auth.  Remove the anon role, as it's not a valid choice.
@@ -827,6 +807,11 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
           // user has new permissions, so we clear their menu cache
           cache_clear_all($account->uid .':', 'cache_menu', TRUE);
 
+          if ($pre_auth) {
+            // Mail the user, letting them know their account now has auth user perms.
+            _user_mail_notify('status_activated', $account);
+          }
+
           drupal_set_message(t('You have successfully validated %user.', array('%user' => $account->name)));
           drupal_goto("user/$account->uid/edit");
           break;
@@ -953,7 +938,7 @@ function logintoboggan_resend_validation($uid) {
 }
 
 function _logintoboggan_protocol() {
-  return (($_SERVER['HTTPS'] == 'on') ? 'https' : 'http');
+  return ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https' : 'http');
 }
 
 function _logintoboggan_process_redirect($redirect, $account) {
@@ -970,4 +955,84 @@ function _logintoboggan_process_redirect($redirect, $account) {
 function logintoboggan_flip_user_email_verification($form, &$form_state) {
   $value = $form_state['values']['user_email_verification'] ? FALSE : TRUE;
   variable_set('user_email_verification', $value);
+}
+
+/**
+ * Conditionally create and send a notification email when a certain
+ * operation happens on the given user account. This is a knock-off of
+ * _user_mail_notify() customized for LT.
+ *
+ * @see user_mail_tokens()
+ * @see drupal_mail()
+ *
+ * @param $op
+ *  The operation being performed on the account.  Possible values:
+ *  'register_admin_created': Welcome message for user created by the admin
+ *  'register_no_approval_required': Welcome message when user self-registers
+ *  'register_pending_approval': Welcome message, user pending admin approval
+ *  'password_reset': Password recovery request
+ *  'status_activated': Account activated
+ *  'status_blocked': Account blocked
+ *  'status_deleted': Account deleted
+ *
+ * @param $account
+ *  The user object of the account being notified.  Must contain at
+ *  least the fields 'uid', 'name', and 'mail'.
+ * @param $login_url
+ *   The custom !login_url setting. User default is used if none is provided.
+ * @param $language
+ *  Optional language to use for the notification, overriding account language.
+ * @return
+ *  The return value from drupal_mail_send(), if ends up being called.
+ */
+function _logintoboggan_mail_notify($op, $account, $login_url = NULL, $language = NULL) {
+  // By default, we always notify except for deleted and blocked.
+  $default_notify = ($op != 'status_deleted' && $op != 'status_blocked');
+  $notify = variable_get('user_mail_'. $op .'_notify', $default_notify);
+  if ($notify) {
+    $params['account'] = $account;
+    $params['login_url'] = $login_url;
+    $language = $language ? $language : user_preferred_language($account);
+    $mail = drupal_mail('logintoboggan', $op, $account->mail, $language, $params);
+    if ($op == 'register_pending_approval') {
+      // If a user registered requiring admin approval, notify the admin, too.
+      // We use the site default language for this.
+      $params['validating_url'] = logintoboggan_eml_validate_url($account) .'/admin';
+      drupal_mail('logintoboggan', 'register_pending_approval_admin', variable_get('site_mail', ini_get('sendmail_from')), language_default(), $params);
+    }
+  }
+  return empty($mail) ? NULL : $mail['result'];
+}
+
+/**
+ * Implementation of hook_mail().
+ */
+function logintoboggan_mail($key, &$message, $params) {
+  global $base_url;
+
+  $language = $message['language'];
+  $langcode = isset($language) ? $language->language : NULL;
+
+  $variables = user_mail_tokens($params['account'], $language);
+  // Customize special tokens.
+  $variables['!uri'] = substr($base_url, strlen(_logintoboggan_protocol() .'://'));
+  if (isset($params['login_url'])) {
+    $variables['!login_url'] = $params['login_url'];
+  }
+
+  if ($key == 'register_pending_approval_admin') {
+    $variables['!validating_url'] = $params['validating_url'];
+    $message['subject'] .= t("(!site) Account application for !username", $variables, $langcode);
+    $reg_pass_set = !variable_get('user_email_verification', TRUE);
+    if ($reg_pass_set) {
+      $message['body'][] = t("!username has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!edit_uri", $variables, $langcode);
+    }
+    else {
+      $message['body'][] = t("!username has applied for an account.\n\n!edit_uri", $variables, $langcode);
+    }
+  }
+  else {
+    $message['subject'] .= _user_mail_text($key .'_subject', $language, $variables);
+    $message['body'][] = _user_mail_text($key .'_body', $language, $variables);
+  }
 }
