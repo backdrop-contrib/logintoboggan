@@ -96,7 +96,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
       if (($form['module']['#value'] == 'user') && ($form['delta']['#value'] == 0)) {
         $form['#submit'][] = 'logintoboggan_user_block_admin_configure_submit';
 
-        $form['block_settings']['title']['#description'] = t('Override the default title for the block. Use <em>&lt;none&gt;</em> to display no title, or leave blank to use the default block title.<br \><strong>Note:</strong> Logintoboggan module is installed. If you are using one of the custom login block types below, it is recommended that you set this to <em>&lt;none&gt;</em>');
+        $form['block_settings']['title']['#description'] .= '<div id="logintoboggan-block-title-description">'. t('<strong>Note:</strong> Logintoboggan module is installed. If you are using one of the custom login block types below, it is recommended that you set this to <em>&lt;none&gt;</em>.') .'</div>';
 
         $form['block_settings']['toboggan_block_type'] = array('#type' => 'radios',
           '#title' => t('Block type'),
@@ -131,16 +131,17 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
         if ((variable_get('user_register', 1) == 2)) {
           $form['account']['status']['#description'] = t('If this user was created using the "Immediate Login" feature of LoginToboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site\'s pre-authorized role in the "Roles" section below, or they will not receive authenticated user permissions!');
         }
-        $form['account']['roles']['#description'] = t('The user is assigned LoginToboggan\'s pre-authorized role, and is not currently receiving authenticated user permissions.');
+        $form['account']['roles']['#description'] = t("The user is assigned LoginToboggan's pre-authorized role, and is not currently receiving authenticated user permissions.");
       }
       break;
     case 'user_login':
     case 'user_login_block':
-      //Grab the message from settings if there is one to display at the top of the login block.
+      // Grab the message from settings if there is one to display at the top of the login block.
       if ($login_msg = variable_get('toboggan_block_msg', '')) {
-        $form['message'] = array('#value' => filter_xss_admin($login_msg),
-                             '#weight' => -50,
-                           );
+        $form['message'] = array(
+          '#value' => filter_xss_admin($login_msg),
+          '#weight' => -50,
+        );
       }
       $form['name']['#attributes'] = array('tabindex' => '1');
       $form['pass']['#attributes'] = array('tabindex' => '2');
