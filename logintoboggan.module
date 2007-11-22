@@ -512,6 +512,8 @@ function logintoboggan_user_block_admin_configure_submit($form, &$form_state) {
 
 /**
  * Implementation of hook_block
+ *
+ * @ingroup logintoboggan_core
  */
 function logintoboggan_block($op = 'list', $delta = 0, $edit = array()) {
   global $user;
@@ -763,7 +765,7 @@ function logintoboggan_validate_pass($pass) {
   * - gets the role id for the "validating" user role.
   */
 function logintoboggan_validating_id() {
-  return variable_get('toboggan_role', 2);
+  return variable_get('toboggan_role', DRUPAL_AUTHENTICATED_RID);
 }
 
 
