@@ -623,7 +623,7 @@ function logintoboggan_main_settings(&$form_state) {
   $form ['registration']['toboggan_role'] = array('#type' => 'select',
     '#title' => t('Non-authenticated role'),
     '#options' => $roles,
-    '#default_value' => variable_get('toboggan_role', 2),
+    '#default_value' => variable_get('toboggan_role', DRUPAL_AUTHENTICATED_RID),
     '#description' => t('If "Set password & Immediate login" is selected, users will be able to login before their e-mail address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the "authenticated user" role once they follow the link in their welcome e-mail. <a href="!url">Add new roles</a>.', array('!url' => url('admin/user/roles'))),
     );
 
