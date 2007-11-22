@@ -155,7 +155,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
           $form['name']['#description'] = t('Enter your %s username, e-mail address, or an ID from one of our affiliates: !a.', array('%s' => variable_get('site_name', 'local'), '!a' => implode(', ', user_auth_help_links())));
         }
       }
-      if($GLOBALS['logintoboggan_denied'] == TRUE){
+      if(isset($GLOBALS['logintoboggan_denied']) && $GLOBALS['logintoboggan_denied'] == TRUE){
         $form['#redirect'] = logintoboggan_destination();
       }
 
@@ -557,11 +557,18 @@ function theme_lt_loggedinblock(){
 
 function _logintoboggan_toggleboggan ($form) {
 
-  drupal_add_js(_logintoboggan_toggleboggan_js(), 'inline');
+  drupal_add_js(drupal_get_path('module', 'logintoboggan') .'/logintoboggan.js');
 
   $pre = '<div id="toboggan-container" class="toboggan-container">';
-  $pre .= '<div class="toboggan-login-link">';
-  $pre .= l(t('Login/Register'), 'user/login', array('onclick' => "toggleboggan();this.blur();return false;"));
+  $options = array(
+    'attributes' => array(
+      'id' => 'toboggan-login-link',
+      'class' => 'toboggan-login-link',
+    ),
+    'query' => drupal_get_destination(),
+  );
+  $pre .= '<div id="toboggan-login-link-container" class="toboggan-login-link-container">';
+  $pre .= l(t('Login/Register'), 'user/login', $options);
   $pre .= '</div>';
 
   //the block that will be toggled
@@ -572,20 +579,8 @@ function _logintoboggan_toggleboggan ($form) {
   return $form;
 }
 
-function _logintoboggan_toggleboggan_js() {
-  return '
-  $(function() {
-      $("#toboggan-login").hide();
-    }
-  );
-  function toggleboggan() {
-    $("#toboggan-login").toggle();
-  }
-  ';
-}
-
-function logintoboggan_main_settings() {
-  $version .= str_replace(array('$Re'.'vision:', '$Da'.'te:', '$'), array('', '', ''), '<p style="font-size:x-small">Login Toboggan version: <b>$Revision$</b>, $Date$</p>');
+function logintoboggan_main_settings(&$form_state) {
+  $version = str_replace(array('$Re'.'vision:', '$Da'.'te:', '$'), array('', '', ''), '<p style="font-size:x-small">Login Toboggan version: <b>$Revision$</b>, $Date$</p>');
 
   $_disabled = t('disabled');
   $_enabled = t('enabled');

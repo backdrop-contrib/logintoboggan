@@ -1,23 +1,23 @@
-.toboggan-container {
+div.toboggan-container {
   text-align: center;
 }
 
-.toboggan-login-link {
+div.toboggan-login-link-container {
   text-align: left;
 }
 
-.toboggan-login-link a {
+div.toboggan-login-link-container a {
   text-decoration: none;
 }
 
-.toboggan-block-message {
+div.toboggan-block-message {
   text-align: left;
 }
 
-.user-login-block {
+div.user-login-block {
   text-align: left;
 }
 
-.user-login-block a {
+div.user-login-block a {
   text-align: left;
 }
