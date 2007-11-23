@@ -119,6 +119,7 @@ function logintoboggan_uninstall() {
     'toboggan_redirect_on_confirm',
     'login_successful',
     'toboggan_min_pass_length',
+    'logintoboggan_immediate_login',
   );
   foreach ($variables as $variable) {
   	variable_del($variable);
