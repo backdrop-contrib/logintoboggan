@@ -4,9 +4,6 @@
 /**
  * @todo
  *
- * _ Configurable text for theme_lt_access_denied()
- * _ clean up variable names
- *
  */
 
 /**
@@ -93,15 +90,15 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
 
         $form['block_settings']['title']['#description'] .= '<div id="logintoboggan-block-title-description">'. t('<strong>Note:</strong> Logintoboggan module is installed. If you are using one of the custom login block types below, it is recommended that you set this to <em>&lt;none&gt;</em>.') .'</div>';
 
-        $form['block_settings']['toboggan_block_type'] = array('#type' => 'radios',
+        $form['block_settings']['logintoboggan_login_block_type'] = array('#type' => 'radios',
           '#title' => t('Block type'),
-          '#default_value' => variable_get('toboggan_block_type', 1),
+          '#default_value' => variable_get('logintoboggan_login_block_type', 0),
           '#options' => array(t('Standard'), t('Link'), t('Collapsible Form')),
         );
 
-        $form['block_settings']['toboggan_block_msg'] = array('#type' => 'textarea',
+        $form['block_settings']['logintoboggan_login_block_message'] = array('#type' => 'textarea',
           '#title' => t('Set a custom message to appear at the top of the login block'),
-          '#default_value' => variable_get('toboggan_block_msg', ''),
+          '#default_value' => variable_get('logintoboggan_login_block_message', ''),
         );
       }
       break;
@@ -132,7 +129,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
     case 'user_login':
     case 'user_login_block':
       // Grab the message from settings if there is one to display at the top of the login block.
-      if ($login_msg = variable_get('toboggan_block_msg', '')) {
+      if ($login_msg = variable_get('logintoboggan_login_block_message', '')) {
         $form['message'] = array(
           '#value' => filter_xss_admin($login_msg),
           '#weight' => -50,
@@ -141,7 +138,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
       $form['name']['#attributes'] = array('tabindex' => '1');
       $form['pass']['#attributes'] = array('tabindex' => '2');
       $form['submit']['#attributes'] = array('tabindex' => '3');
-      if (variable_get('login_with_mail', 0)) {
+      if (variable_get('logintoboggan_login_with_email', 0)) {
         // LT's validation function must run first.
         $form['#validate'] = array('logintoboggan_user_login_validate') + $form['#validate'];
         $form['name']['#title'] = t('Username or e-mail address');
@@ -154,7 +151,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
       }
 
       if (($form_id == 'user_login_block')) {
-        $block_type = variable_get('toboggan_block_type', 1);
+        $block_type = variable_get('logintoboggan_login_block_type', 0);
         if ($block_type == 1) {
           $form = array('#value' => l(theme('lt_login_link'), 'user/login', array('query' => drupal_get_destination())));
         }
@@ -170,7 +167,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
       if (user_access('administer users')) {
         break;
       }
-      $mail = variable_get('email_reg_confirm', 0);
+      $mail = variable_get('logintoboggan_confirm_email_at_registration', 0);
       $pass = !variable_get('user_email_verification', TRUE);
 
       // Replace core's registration function with LT's registration function.
@@ -210,7 +207,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
           }
         }
         if ($pass) {
-          $min_pass = variable_get('toboggan_min_pass_length', 0);
+          $min_pass = variable_get('logintoboggan_minimum_password_length', 0);
           $length = $min_pass ? t('between !min and', array('!min' => $min_pass)) : t('no more than');
           $form['pass']['#description'] = t('Please choose a password for your account; it must be !length 30 characters and spaces are not allowed.', array('!length' => $length));
         }
@@ -305,10 +302,10 @@ function logintoboggan_user_register_submit($form, &$form_state) {
   drupal_set_message($message);
 
   // where do we need to redirect after registration?
-  $redirect = _logintoboggan_process_redirect(variable_get('toboggan_redirect_on_register', ''), $account);
+  $redirect = _logintoboggan_process_redirect(variable_get('logintoboggan_redirect_on_register', ''), $account);
 
   // Log the user in if they created the account and immediate login is enabled.
-  if($reg_pass_set && variable_get('logintoboggan_immediate_login', TRUE)) {
+  if($reg_pass_set && variable_get('logintoboggan_immediate_login_on_register', TRUE)) {
     $form_state['redirect'] = logintoboggan_process_login($account, $redirect);
   }
   else {
@@ -336,7 +333,7 @@ function logintoboggan_user_login_validate($form, &$form_state) {
  * @ingroup logintoboggan_form
  */
 function logintoboggan_user_register_validate($form, &$form_state) {
-  if (variable_get('login_with_mail', 0)) {
+  if (variable_get('logintoboggan_login_with_email', 0)) {
     // check that it's not an e-mail
     if (db_result(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s') AND uid <> 0", $form_state['values']['name']))) {
       form_set_error('name', t('This e-mail address has already been taken by another user.'));
@@ -344,7 +341,7 @@ function logintoboggan_user_register_validate($form, &$form_state) {
   }
 
   //Check to see whether our e-mail address matches the confirm address if enabled.
-  if (variable_get('email_reg_confirm', 0)) {
+  if (variable_get('logintoboggan_confirm_email_at_registration', 0)) {
     if ($form_state['values']['mail'] != $form_state['values']['conf_mail']) {
       form_set_error('conf_mail', t('Your e-mail address and confirmed e-mail address must match.'));
     }
@@ -491,8 +488,8 @@ function logintoboggan_theme() {
  */
 
 function logintoboggan_user_block_admin_configure_submit($form, &$form_state) {
-  variable_set('toboggan_block_type', $form_state['values']['toboggan_block_type']);
-  variable_set('toboggan_block_msg', $form_state['values']['toboggan_block_msg']);
+  variable_set('logintoboggan_login_block_type', $form_state['values']['logintoboggan_login_block_type']);
+  variable_set('logintoboggan_login_block_message', $form_state['values']['logintoboggan_login_block_message']);
 }
 
 /**
@@ -583,10 +580,10 @@ function logintoboggan_main_settings(&$form_state) {
     '#prefix' => $version,
   );
 
-  $form['login']['login_with_mail'] = array(
+  $form['login']['logintoboggan_login_with_email'] = array(
     '#type' => 'radios',
     '#title' => t('Allow users to login using their e-mail address'),
-    '#default_value' => variable_get('login_with_mail', 0),
+    '#default_value' => variable_get('logintoboggan_login_with_email', 0),
     '#options' => array($_disabled, $_enabled),
     '#description' => t('Users will be able to enter EITHER their username OR their e-mail address to log in. NOTE: This will disallow users from registering using an e-mail address as their username.'),
   );
@@ -596,10 +593,10 @@ function logintoboggan_main_settings(&$form_state) {
     '#title' => t('Registration'),
   );
 
-  $form['registration']['email_reg_confirm'] = array(
+  $form['registration']['logintoboggan_confirm_email_at_registration'] = array(
     '#type' => 'radios',
     '#title' => t('Use two e-mail fields on registration form'),
-    '#default_value' => variable_get('email_reg_confirm', 0),
+    '#default_value' => variable_get('logintoboggan_confirm_email_at_registration', 0),
     '#options' => array($_disabled, $_enabled),
     '#description' => t('User will have to type the same e-mail address into both fields. This helps to confirm that they\'ve typed the correct address.'),
   );
@@ -614,18 +611,18 @@ function logintoboggan_main_settings(&$form_state) {
   // Grab the roles that can be used for pre-auth.  Remove the anon role, as it's not a valid choice.
   $roles = user_roles(1);
 
-  $form ['registration']['toboggan_role'] = array(
+  $form ['registration']['logintoboggan_pre_auth_role'] = array(
     '#type' => 'select',
     '#title' => t('Non-authenticated role'),
     '#options' => $roles,
-    '#default_value' => variable_get('toboggan_role', DRUPAL_AUTHENTICATED_RID),
+    '#default_value' => variable_get('logintoboggan_pre_auth_role', DRUPAL_AUTHENTICATED_RID),
     '#description' => t('If "Set password & Immediate login" is selected, users will be able to login before their e-mail address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the "authenticated user" role once they follow the link in their welcome e-mail. <a href="!url">Add new roles</a>.', array('!url' => url('admin/user/roles'))),
   );
 
-  $form['registration']['logintoboggan_immediate_login'] = array(
+  $form['registration']['logintoboggan_immediate_login_on_register'] = array(
     '#type' => 'checkbox',
     '#title' => t('Immediate login'),
-    '#default_value' => variable_get('logintoboggan_immediate_login', TRUE),
+    '#default_value' => variable_get('logintoboggan_immediate_login_on_register', TRUE),
     '#description' => t("If set, the user will be logged in immediately after registering. Note that is only applies if the 'Set password' option above is enabled."),
   );
 
@@ -636,17 +633,17 @@ function logintoboggan_main_settings(&$form_state) {
     '#collapsed' => false,
   );
 
-  $form['registration']['redirect']['toboggan_redirect_on_register'] = array(
+  $form['registration']['redirect']['logintoboggan_redirect_on_register'] = array(
     '#type' => 'textfield',
     '#title' => t('Redirect path on Registration'),
-    '#default_value' => variable_get('toboggan_redirect_on_register', ''),
+    '#default_value' => variable_get('logintoboggan_redirect_on_register', ''),
     '#description' => t('Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path.'),
   );
 
-  $form['registration']['redirect']['toboggan_redirect_on_confirm'] = array(
+  $form['registration']['redirect']['logintoboggan_redirect_on_confirm'] = array(
     '#type' => 'textfield',
     '#title' => t('Redirect path on Confirmation'),
-    '#default_value' => variable_get('toboggan_redirect_on_confirm', ''),
+    '#default_value' => variable_get('logintoboggan_redirect_on_confirm', ''),
     '#description' => t('Normally, after a user confirms their new account, they will be taken to their user page. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path.'),
   );
 
@@ -671,22 +668,22 @@ function logintoboggan_main_settings(&$form_state) {
     '#default_value' => $site403,
     '#description' => t('Anonymous users will be presented with a login form along with an access denied message.')
   );
-  $form['other']['login_successful'] = array(
+  $form['other']['logintoboggan_login_successful_message'] = array(
     '#type' => 'radios',
     '#title' => t('Display login successful message'),
     '#options' => array($_disabled, $_enabled),
-    '#default_value' => variable_get('login_successful', 0),
+    '#default_value' => variable_get('logintoboggan_login_successful_message', 0),
     '#description' => t('If enabled, users will receive a \'Login successful\' message upon login.')
   );
   $min_pass_options = array(t('None'));
   for ($i = 2; $i < 30; $i++) {
     $min_pass_options[$i] = $i;
   }
-  $form['other']['toboggan_min_pass_length'] = array(
+  $form['other']['logintoboggan_minimum_password_length'] = array(
     '#type' => 'select',
     '#title' => t('Minimum password length'),
     '#options' => $min_pass_options,
-    '#default_value' => variable_get('toboggan_min_pass_length', 0),
+    '#default_value' => variable_get('logintoboggan_minimum_password_length', 0),
     '#description' => t('LoginToboggan automatically performs basic password validation for illegal characters. If you would additionally like to have a mimimum password length requirement, select the length here, or set to \'None\' for no password length validation.')
   );
 
@@ -759,7 +756,7 @@ function logintoboggan_validate_pass($pass) {
     return t('The password contains an illegal character.');
   }
   if (strlen($pass) > 30) return t('The password is too long: it must be less than 30 characters.');
-  $min_pass_length = variable_get('toboggan_min_pass_length', 0);
+  $min_pass_length = variable_get('logintoboggan_minimum_password_length', 0);
   if ($min_pass_length && strlen($pass) < $min_pass_length) return t("The password is too short: it must be at least %min_length characters.", array('%min_length' => $min_pass_length));
 }
 
@@ -769,7 +766,7 @@ function logintoboggan_validate_pass($pass) {
   * - gets the role id for the "validating" user role.
   */
 function logintoboggan_validating_id() {
-  return variable_get('toboggan_role', DRUPAL_AUTHENTICATED_RID);
+  return variable_get('logintoboggan_pre_auth_role', DRUPAL_AUTHENTICATED_RID);
 }
 
 
@@ -806,7 +803,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
       }
 
       // Where do we redirect after confirming the account?
-      $redirect = _logintoboggan_process_redirect(variable_get('toboggan_redirect_on_confirm', ''), $account);
+      $redirect = _logintoboggan_process_redirect(variable_get('logintoboggan_redirect_on_confirm', ''), $account);
 
       switch ($action) {
         // Proceed with normal user login, as long as it's open registration and their
@@ -924,7 +921,7 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
       );
       return $form;
     }
-  } elseif ($op == 'login' && variable_get('login_successful', 0)) {
+  } elseif ($op == 'login' && variable_get('logintoboggan_login_successful_message', 0)) {
     drupal_set_message(t('Login successful.'));
   }
   elseif ($op == 'load') {
