@@ -156,7 +156,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
       if (($form_id == 'user_login_block')) {
         $block_type = variable_get('toboggan_block_type', 1);
         if ($block_type == 1) {
-          $form = array('#value' => l(t('Login/Register'), 'user/login', array('query' => drupal_get_destination())));
+          $form = array('#value' => l(theme('lt_login_link'), 'user/login', array('query' => drupal_get_destination())));
         }
         elseif ($block_type == 2) {
           $form  = _logintoboggan_toggleboggan($form);
@@ -480,6 +480,9 @@ function logintoboggan_theme() {
     'lt_loggedinblock' => array(
       'arguments' => array(),
     ),
+    'lt_login_link' => array(
+      'arguments' => array(),
+    ),
   );
 }
 
@@ -523,10 +526,16 @@ function logintoboggan_block($op = 'list', $delta = 0, $edit = array()) {
  * Custom theme function for defining what gets displayed for logged in users.
  *
  */
-
-function theme_lt_loggedinblock(){
+function theme_lt_loggedinblock() {
   global $user;
   return check_plain($user->name) .' | ' . l(t('Log out'), 'logout');
+}
+
+/**
+ * Custom theme function for the login/register link.
+ */
+function theme_lt_login_link() {
+  return t('Login/Register');
 }
 
 /**
@@ -551,7 +560,7 @@ function _logintoboggan_toggleboggan ($form) {
     'query' => drupal_get_destination(),
   );
   $pre .= '<div id="toboggan-login-link-container" class="toboggan-login-link-container">';
-  $pre .= l(t('Login/Register'), 'user/login', $options);
+  $pre .= l(theme('lt_login_link'), 'user/login', $options);
   $pre .= '</div>';
 
   //the block that will be toggled
