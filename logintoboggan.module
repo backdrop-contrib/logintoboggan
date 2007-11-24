@@ -10,7 +10,6 @@
  * @wishlist
  *
  * _ password complexity testing option
- * _ setting to expire unverified accounts and purge them from system
  *
  */
 
@@ -19,9 +18,37 @@
  */
 
 /**
+ * Implementation of hook_cron().
+ */
+function logintoboggan_cron() {
+  // If set password is enabled, and a purge interval is set, check for
+  // unvalidated users to purge.
+  if (($purge_interval = variable_get('logintoboggan_purge_unvalidated_user_interval', 0)) && !variable_get('user_email_verification', TRUE)) {
+    $validating_id = logintoboggan_validating_id();
+    // As a safety check, make sure that we have a non-core role as the
+    // pre-auth role -- otherwise skip.
+    if ($validating_id > DRUPAL_AUTHENTICATED_RID) {
+      $purge_time = time() - $purge_interval;
+      $accounts = db_query("SELECT u.uid, u.name FROM {users} u INNER JOIN {users_roles} ur ON u.uid = ur.uid WHERE ur.rid = %d AND u.access < %d", $validating_id, $purge_time);
+
+      $purged_users = array();
+      // Delete the users from the system.
+      while ($account = db_fetch_object($accounts)) {
+        user_delete(array(), $account->uid);
+        $purged_users[] = check_plain($account->name);
+      }
+
+      // Log the purged users.
+      if (!empty($purged_users)) {
+        watchdog('logintoboggan', 'Purged the following unvalidated users: !purged_users', array('!purged_users' => theme('item_list', $purged_users)));
+      }
+    }
+  }
+}
+
+/**
  * Implementation of hook_help().
  */
-
 function logintoboggan_help($path, $arg) {
   switch ($path) {
     case 'admin/help#logintoboggan':
@@ -616,14 +643,38 @@ function logintoboggan_main_settings(&$form_state) {
     '#title' => t('Non-authenticated role'),
     '#options' => $roles,
     '#default_value' => variable_get('logintoboggan_pre_auth_role', DRUPAL_AUTHENTICATED_RID),
-    '#description' => t('If "Set password & Immediate login" is selected, users will be able to login before their e-mail address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the "authenticated user" role once they follow the link in their welcome e-mail. <a href="!url">Add new roles</a>.', array('!url' => url('admin/user/roles'))),
+    '#description' => t('If "Set password" is selected, users will be able to login before their e-mail address has been authenticated. Therefore, you must choose a role for new non-authenticated users. Users will be removed from this role and assigned to the "authenticated user" role once they follow the link in their welcome e-mail. <a href="!url">Add new roles</a>.', array('!url' => url('admin/user/roles'))),
+  );
+
+  $purge_options = array(
+    0 => t('Never delete'),
+    86400 => t('1 Day'),
+    172800 => t('2 Days'),
+    259200 => t('3 Days'),
+    345600 => t('4 Days'),
+    432000 => t('5 Days'),
+    518400 => t('6 Days'),
+    604800 => t('1 Week'),
+    1209600 => t('2 Weeks'),
+    2592000 => t('1 Month'),
+    7776000 => t('3 Months'),
+    15379200 => t('6 Months'),
+    30758400 => t('1 Year'),
+  );
+
+  $form['registration']['logintoboggan_purge_unvalidated_user_interval'] = array(
+    '#type' => 'select',
+    '#title' => t('Delete unvalidated users after'),
+    '#options' => $purge_options,
+    '#default_value' => variable_get('logintoboggan_purge_unvalidated_user_interval', 0),
+    '#description' => t("If enabled, users that are still in the 'Non-authenticated role' set above will be deleted automatically from the system, if the set time interval since their last login has passed. This can be used to automatically purge spambot registrations. Note: this requires cron, and also requires that the 'Set password' option above is enabled.")
   );
 
   $form['registration']['logintoboggan_immediate_login_on_register'] = array(
     '#type' => 'checkbox',
     '#title' => t('Immediate login'),
     '#default_value' => variable_get('logintoboggan_immediate_login_on_register', TRUE),
-    '#description' => t("If set, the user will be logged in immediately after registering. Note that is only applies if the 'Set password' option above is enabled."),
+    '#description' => t("If set, the user will be logged in immediately after registering. Note this only applies if the 'Set password' option above is enabled."),
   );
 
   $form['registration']['redirect'] = array(
