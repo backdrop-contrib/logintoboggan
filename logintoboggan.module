@@ -869,7 +869,8 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
             drupal_goto('');
           }
           else {
-            drupal_goto(logintoboggan_process_login($account, $redirect));
+            $redirect = logintoboggan_process_login($account, $redirect);
+            drupal_goto($redirect['path'], $redirect['query'], $redirect['fragment']);
           }
           break;
         // Admin validation.
@@ -933,15 +934,19 @@ function logintoboggan_process_login($account, $redirect = ''){
     watchdog('user', 'User %name used one-time login link at time %timestamp.', array('%name' => $user->name, '%timestamp' => time()));
     drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to login. Please change your password.'));
 
-    $destination = $redirect ? "destination=$redirect" : NULL;
+    $destination = $redirect ? 'destination='. urlencode($redirect) : NULL;
     drupal_goto('user/'. $user->uid .'/edit', $destination);
   }
 
-  if ($redirect != '') {
+  if ($redirect['path'] != '') {
     return $redirect;
   }
 
-  return 'user/'. $user->uid;
+  return array(
+    'path' => 'user/'. $user->uid,
+    'query' => NULL,
+    'fragment' => NULL,
+  );
 }
 
 function logintoboggan_eml_validate_url($account){
@@ -1013,7 +1018,11 @@ function _logintoboggan_protocol() {
 
 function _logintoboggan_process_redirect($redirect, $account) {
   $variables = array('%uid' => $account->uid);
-  $redirect = strtr($redirect, $variables);
+  $redirect = parse_url(urldecode(strtr($redirect, $variables)));
+
+  // Explicitly create query and fragment elements if not present already.
+  $redirect['query'] = isset($redirect['query']) ? $redirect['query'] : NULL;
+  $redirect['fragment'] = isset($redirect['fragment']) ? $redirect['fragment'] : NULL;
 
   return $redirect;
 }
