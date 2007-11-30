@@ -198,11 +198,13 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
       $pass = !variable_get('user_email_verification', TRUE);
 
       // Replace core's registration function with LT's registration function.
+      // Put the LT submit handler first, so other submit handlers have a valid
+      // user to work with upon registration.
       $key = array_search('user_register_submit', $form['#submit']);
       if ($key !== FALSE) {
         unset($form['#submit'][$key]);
       }
-      $form['#submit'][] = 'logintoboggan_user_register_submit';
+      $form['#submit'] = array('logintoboggan_user_register_submit') + $form['#submit'];
 
       if ($mail || $pass) {
         $form['#validate'][] = 'logintoboggan_user_register_validate';
