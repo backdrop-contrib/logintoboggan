@@ -24,7 +24,13 @@ The module does NOT require any patches to core or other special configurations.
 
 INSTALLATION:
 
-Put the module in your modules/ directory, or your sites/all/ direcory.
+Put the module in your modules/ directory, or your sites/all/modules directory,
+  or your sites/[my site]/modules directory.
 Enable it.
-Configure settings at administer -> user management -> logintoboggan.
+Configure settings at Administer -> User management -> LoginToboggan.
+Optionally configure the 'LoginToboggan logged in block' at
+  Administer -> Site building -> Blocks.
+Optionally configure the 'User login' block for LoginToboggan functionality at
+  Administer -> Site building -> Blocks.
 Done.
+
