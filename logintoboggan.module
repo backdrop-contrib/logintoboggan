@@ -79,7 +79,7 @@ function logintoboggan_help($path, $arg) {
 }
 
 /**
- * Helper function for example user email textfield.
+ * Helper function for example user e-mail textfield.
  */
 function logintoboggan_example_help() {
   $example = t('
@@ -131,8 +131,8 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
       }
       break;
 
-    // This will reset the the site 403 variable to the default if the module is disabled and the toboggan redirect on acccess
-    // denied is enabled.
+    // This will reset the the site 403 variable to the default if the module is
+    // disabled and the toboggan redirect on access denied is enabled.
     case 'system_modules':
       if ($_POST && !$_POST['status']['logintoboggan'] && (db_result(db_query("SELECT status FROM {system} WHERE name = 'logintoboggan'")) == 1) && (variable_get('site_403', '') == 'toboggan/denied')) {
         variable_set('site_403', '');
@@ -141,6 +141,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
     case 'logintoboggan_main_settings':
       $form['#submit'][] = 'logintoboggan_flip_user_email_verification';
       break;
+
     case 'user_profile_form':
       $form['#validate'][] = 'logintoboggan_user_edit_validate';
       $account = user_load(array('uid' => arg(1)));
@@ -154,25 +155,28 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
         $form['account']['roles']['#description'] = t("The user is assigned LoginToboggan's pre-authorized role, and is not currently receiving authenticated user permissions.");
       }
       break;
+
     case 'user_login':
     case 'user_login_block':
-      // Grab the message from settings if there is one to display at the top of the login block.
+      // Grab the message from settings for display at the top of the login block.
       if ($login_msg = variable_get('logintoboggan_login_block_message', '')) {
         $form['message'] = array(
           '#value' => filter_xss_admin($login_msg),
           '#weight' => -50,
         );
       }
-      $form['name']['#attributes'] = array('tabindex' => '1');
-      $form['pass']['#attributes'] = array('tabindex' => '2');
-      $form['submit']['#attributes'] = array('tabindex' => '3');
+      $form['name']['#attributes']['tabindex']    = '1';
+      $form['pass']['#attributes']['tabindex']    = '2';
+      $form['submit']['#attributes']['tabindex']  = '3';
       if (variable_get('logintoboggan_login_with_email', 0)) {
         // LT's validation function must run first.
         $form['#validate'] = array('logintoboggan_user_login_validate') + $form['#validate'];
-        $form['name']['#title'] = t('Username or e-mail address');
-        if (variable_get('drupal_authentication_service', FALSE) && count(user_auth_help_links()) > 0) {
-          $form['name']['#description'] = t('Enter your %s username, e-mail address, or an ID from one of our affiliates: !a.', array('%s' => variable_get('site_name', 'local'), '!a' => implode(', ', user_auth_help_links())));
-        }
+        // Use theme functions to print the username field's textual labels.
+        $form['name']['#title']       = theme_lt_username_title($form_id);
+        $form['name']['#description'] = theme_lt_username_description($form_id);
+        // Use theme functions to print the password field's textual labels.
+        $form['pass']['#title']       = theme_lt_password_title($form_id);
+        $form['pass']['#description'] = theme_lt_password_description($form_id);
       }
       if(isset($GLOBALS['logintoboggan_denied']) && $GLOBALS['logintoboggan_denied'] == TRUE){
         $form['#redirect'] = logintoboggan_destination();
@@ -501,6 +505,18 @@ function logintoboggan_revalidate_access($uid) {
  */
 function logintoboggan_theme() {
   return array(
+    'lt_username_title' => array(
+      'arguments' => array('form_id'),
+    ),
+    'lt_username_description' => array(
+      'arguments' => array('form_id'),
+    ),
+    'lt_password_title' => array(
+      'arguments' => array('form_id'),
+    ),
+    'lt_password_description' => array(
+      'arguments' => array('form_id'),
+    ),
     'lt_access_denied' => array(
       'arguments' => array(),
     ),
@@ -547,22 +563,6 @@ function logintoboggan_block($op = 'list', $delta = 0, $edit = array()) {
       }
       break;
   }
-}
-
-/**
- * Custom theme function for defining what gets displayed for logged in users.
- *
- */
-function theme_lt_loggedinblock() {
-  global $user;
-  return check_plain($user->name) .' | ' . l(t('Log out'), 'logout');
-}
-
-/**
- * Custom theme function for the login/register link.
- */
-function theme_lt_login_link() {
-  return t('Login/Register');
 }
 
 /**
@@ -765,12 +765,7 @@ function logintoboggan_denied() {
   return $return;
 }
 
-// Themeable function so that the access denied message can be customized
-function theme_lt_access_denied() {
-  return t('You are not authorized to access this page.');
-}
-
-// slight rewrite of drupal_get_destination()
+// Slight rewrite of drupal_get_destination()
 // with custom 403, drupal_get_destination() would return toboggan/denied
 // which would show 'Access Denied' after login... what good is that!?
 function logintoboggan_destination() {
@@ -1118,3 +1113,98 @@ function logintoboggan_mail($key, &$message, $params) {
     $message['body'][] = _user_mail_text($key .'_body', $language, $variables);
   }
 }
+
+/**
+ *
+ * THEME FUNCTIONS!
+ *
+ * You may override and change any of these custom HTML output functions
+ * by copy/pasting them into your template.php file, at which point you can
+ * customize anything, provided you are using the default phptemplate engine.
+ *
+ * For more info on overriding theme functions, see http://drupal.org/node/55126
+ */
+
+/**
+ * Theme the username title of the user login form
+ * and the user login block.
+ */
+function theme_lt_username_title($form_id) {
+  switch ($form_id) {
+    case 'user_login':
+      // Label text for the username field on the /user/login page.
+      return t('Username OR e-mail address');
+      break;
+
+    case 'user_login_block':
+      // Label text for the username field when shown in a block.
+      return t('Username OR e-mail');
+      break;
+  }
+}
+
+/**
+ * Theme the username description of the user login form
+ * and the user login block.
+ */
+function theme_lt_username_description($form_id) {
+  switch ($form_id) {
+    case 'user_login':
+      // The username field's description when shown on the /user/login page.
+      return t('You may login with EITHER your assigned username OR your e-mail address.');
+      break;
+    case 'user_login_block':
+      return t('');
+      break;
+  }
+}
+
+/**
+ * Theme the password title of the user login form
+ * and the user login block.
+ */
+function theme_lt_password_title($form_id) {
+  // Label text for the password field.
+  return t('Password');
+}
+
+/**
+ * Theme the password description of the user login form
+ * and the user login block.
+ */
+function theme_lt_password_description($form_id) {
+  switch ($form_id) {
+    case 'user_login':
+      // The password field's description on the /user/login page.
+      return t('The password field is case sensitive.');
+      break;
+
+    case 'user_login_block':
+      // If showing the login form in a block, don't print any descriptive text.
+      return t('');
+      break;
+  }
+}
+
+/**
+ * Theme the Access Denied message.
+ */
+function theme_lt_access_denied() {
+  return t('You are not authorized to access this page.');
+}
+
+/**
+ * Theme the loggedinblock that shows for logged-in users.
+ */
+function theme_lt_loggedinblock(){
+  global $user;
+  return check_plain($user->name) .' | ' . l(t('Log out'), 'logout');
+}
+
+/**
+ * Custom theme function for the login/register link.
+ */
+function theme_lt_login_link() {
+  return t('Login/Register');
+}
+
