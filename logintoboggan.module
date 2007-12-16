@@ -1205,6 +1205,12 @@ function theme_lt_loggedinblock(){
  * Custom theme function for the login/register link.
  */
 function theme_lt_login_link() {
-  return t('Login/Register');
+  // Only display register text if registration is allowed.
+  if (variable_get('user_register', 1)) {
+    return t('Login/Register');
+  }
+  else {
+    return t('Login');
+  }
 }
 
