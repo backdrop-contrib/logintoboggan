@@ -2,6 +2,13 @@
 // $Id$
 
 /**
+ * @file
+ *  Logintoboggan Module
+ *
+ * This module enhances the configuration abilities of Drupal's default login system.
+ */
+
+/**
  * @todo
  *
  */
