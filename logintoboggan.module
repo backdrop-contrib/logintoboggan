@@ -376,9 +376,9 @@ function logintoboggan_user_login_validate($form, &$form_state) {
  */
 function logintoboggan_user_register_validate($form, &$form_state) {
   if (variable_get('logintoboggan_login_with_email', 0)) {
-    // check that it's not an e-mail
+    // Check that no user is using this name for their email address.
     if (db_result(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s') AND uid <> 0", $form_state['values']['name']))) {
-      form_set_error('name', t('This e-mail address has already been taken by another user.'));
+      form_set_error('name', t('This name has already been taken by another user.'));
     }
   }
 
@@ -623,7 +623,7 @@ function logintoboggan_main_settings(&$form_state) {
     '#title' => t('Allow users to login using their e-mail address'),
     '#default_value' => variable_get('logintoboggan_login_with_email', 0),
     '#options' => array($_disabled, $_enabled),
-    '#description' => t('Users will be able to enter EITHER their username OR their e-mail address to log in. NOTE: This will disallow users from registering using an e-mail address as their username.'),
+    '#description' => t('Users will be able to enter EITHER their username OR their e-mail address to log in.'),
   );
 
   $form['registration'] = array(
@@ -990,6 +990,12 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
     // Just loaded the user into $user_edit.
     // If the user has the pre-auth role, unset the authenticated role
     _logintoboggan_user_roles_alter($user_edit);
+  }
+  elseif ($op == 'validate') {
+    // Check that no user is using this name for their email address.
+    if (db_result(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s') AND uid <> %d", $edit['name'], $user->uid))) {
+      form_set_error('name', t('This name has already been taken by another user.'));
+    }
   }
 }
 
