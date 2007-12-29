@@ -179,11 +179,11 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
         // LT's validation function must run first.
         $form['#validate'] = array('logintoboggan_user_login_validate') + $form['#validate'];
         // Use theme functions to print the username field's textual labels.
-        $form['name']['#title']       = theme_lt_username_title($form_id);
-        $form['name']['#description'] = theme_lt_username_description($form_id);
+        $form['name']['#title']       = theme('lt_username_title', $form_id);
+        $form['name']['#description'] = theme('lt_username_description', $form_id);
         // Use theme functions to print the password field's textual labels.
-        $form['pass']['#title']       = theme_lt_password_title($form_id);
-        $form['pass']['#description'] = theme_lt_password_description($form_id);
+        $form['pass']['#title']       = theme('lt_password_title', $form_id);
+        $form['pass']['#description'] = theme('lt_password_description', $form_id);
       }
       if(isset($GLOBALS['logintoboggan_denied']) && $GLOBALS['logintoboggan_denied'] == TRUE){
         $form['#redirect'] = logintoboggan_destination();
