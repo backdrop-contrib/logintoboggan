@@ -1005,11 +1005,11 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
     // If login with mail is enabled...
     if (variable_get('logintoboggan_login_with_email', 0)) {
       // Check that no user is using this name for their email address.
-      if (isset($edit['name']) && db_result(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s') AND uid <> %d", $edit['name'], $user->uid))) {
+      if (isset($edit['name']) && db_result(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s') AND uid <> %d", $edit['name'], $user_edit->uid))) {
         form_set_error('name', t('This name has already been taken by another user.'));
       }
       // Check that no user is using this email address for their name.
-      if (isset($edit['mail']) && db_result(db_query("SELECT uid FROM {users} WHERE LOWER(name) = LOWER('%s') AND uid <> %d", $edit['mail'], $user->uid))) {
+      if (isset($edit['mail']) && db_result(db_query("SELECT uid FROM {users} WHERE LOWER(name) = LOWER('%s') AND uid <> %d", $edit['mail'], $user_edit->uid))) {
         form_set_error('mail', t('This e-mail has already been taken by another user.'));
       }
     }
