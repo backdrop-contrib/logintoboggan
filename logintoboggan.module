@@ -950,7 +950,7 @@ function logintoboggan_process_login($account, $redirect = ''){
     watchdog('user', 'User %name used one-time login link at time %timestamp.', array('%name' => $user->name, '%timestamp' => time()));
     drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to login. Please change your password.'));
 
-    $destination = $redirect ? 'destination='. urlencode($redirect) : NULL;
+    $destination = $redirect['path'] ? 'destination='. url($redirect['path'], array('query' => $redirect['query'], 'fragment' => $redirect['fragment'])) : NULL;
     drupal_goto('user/'. $user->uid .'/edit', $destination);
   }
 
