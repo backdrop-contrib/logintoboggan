@@ -21,16 +21,3 @@ The Login Toboggan module improves the Drupal login system in an external module
 Users who choose their own password can be automatically assigned to a selected 'non-authenticated' role. This role could have more permissions than anonymous but less than authenticated - thus preventing spoof accounts and spammers.  The user will only be removed from the non-authenticated role and granted authenticated permissions when they verify their account via a special email link, or when an administrator removes them from the non-authenticated role.
 
 The module does NOT require any patches to core or other special configurations.
-
-INSTALLATION:
-
-Put the module in your modules/ directory, or your sites/all/modules directory,
-  or your sites/[my site]/modules directory.
-Enable it.
-Configure settings at Administer -> User management -> LoginToboggan.
-Optionally configure the 'LoginToboggan logged in block' at
-  Administer -> Site building -> Blocks.
-Optionally configure the 'User login' block for LoginToboggan functionality at
-  Administer -> Site building -> Blocks.
-Done.
-
