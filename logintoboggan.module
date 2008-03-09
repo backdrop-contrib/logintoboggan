@@ -373,13 +373,6 @@ function logintoboggan_user_login_validate($form, &$form_state) {
  * @ingroup logintoboggan_form
  */
 function logintoboggan_user_register_validate($form, &$form_state) {
-  if (variable_get('logintoboggan_login_with_email', 0)) {
-    // Check that no user is using this name for their email address.
-    if (db_result(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s') AND uid <> 0", $form_state['values']['name']))) {
-      form_set_error('name', t('This name has already been taken by another user.'));
-    }
-  }
-
   //Check to see whether our e-mail address matches the confirm address if enabled.
   if (variable_get('logintoboggan_confirm_email_at_registration', 0)) {
     if ($form_state['values']['mail'] != $form_state['values']['conf_mail']) {
@@ -1002,12 +995,13 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
   elseif ($op == 'validate') {
     // If login with mail is enabled...
     if (variable_get('logintoboggan_login_with_email', 0)) {
+      $uid = isset($user_edit->uid) ? $user_edit->uid : 0;
       // Check that no user is using this name for their email address.
-      if (isset($edit['name']) && db_result(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s') AND uid <> %d", $edit['name'], $user_edit->uid))) {
+      if (isset($edit['name']) && db_result(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s') AND uid <> %d", $edit['name'], $uid))) {
         form_set_error('name', t('This name has already been taken by another user.'));
       }
       // Check that no user is using this email address for their name.
-      if (isset($edit['mail']) && db_result(db_query("SELECT uid FROM {users} WHERE LOWER(name) = LOWER('%s') AND uid <> %d", $edit['mail'], $user_edit->uid))) {
+      if (isset($edit['mail']) && db_result(db_query("SELECT uid FROM {users} WHERE LOWER(name) = LOWER('%s') AND uid <> %d", $edit['mail'], $uid))) {
         form_set_error('mail', t('This e-mail has already been taken by another user.'));
       }
     }
