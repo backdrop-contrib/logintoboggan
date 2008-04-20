@@ -847,12 +847,18 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
 
       // Test here for a valid pre-auth -- if the pre-auth is set to the auth user, we
       // handle things a bit differently.
-      $pre_auth = logintoboggan_validating_id() != DRUPAL_AUTHENTICATED_RID;
+      $validating_id = logintoboggan_validating_id();
+      $pre_auth = $validating_id != DRUPAL_AUTHENTICATED_RID;
 
       // Remove the pre-auth role from the user, unless they haven't been approved yet.
       if ($account->status) {
         if ($pre_auth) {
-          db_query("DELETE FROM {users_roles} WHERE uid = %d AND rid = %d", $account->uid, logintoboggan_validating_id());
+          db_query("DELETE FROM {users_roles} WHERE uid = %d AND rid = %d", $account->uid, $validating_id);
+          // Since we're passing $account around to the update hook, remove
+          // the pre-auth role from the roles array, and add in the auth user
+          // role.
+          $account->roles[DRUPAL_AUTHENTICATED_RID] = 'authenticated user';
+          unset($account->roles[$validating_id]);
         }
         // Allow other modules to react to email validation by invoking the user update hook.
         $edit = array();
