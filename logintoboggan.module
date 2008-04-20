@@ -1018,21 +1018,16 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
  * Re-sends validation e-mail to user specified by $uid.
  */
 function logintoboggan_resend_validation($uid) {
-  global $base_url, $language;
+  global $language;
 
   $account = user_load(array('uid' => $uid));
   $account->password = t('If required, you may reset your password from: !url', array('!url' => url('user/password', array('absolute' => TRUE))));
 
-  $tokens = user_mail_tokens($account, $language);
-  // Customize special tokens.
-  $tokens['!uri_brief'] = substr($base_url, strlen(_logintoboggan_protocol() .'://'));
-  $tokens['!login_url'] = logintoboggan_eml_validate_url($account);
+  $params['account'] = $account;
+  $params['login_url'] = logintoboggan_eml_validate_url($account);
 
   // Prepare and send e-mail.
-  $from = variable_get('site_mail', ini_get('sendmail_from'));
-  $subject = _user_mail_text('welcome_subject', $tokens);
-  $body = _user_mail_text('welcome_body', $tokens);
-  drupal_mail('logintoboggan-resend-validation', $account->mail, $subject, $body, $from);
+  drupal_mail('logintoboggan', 'logintoboggan_resend_validation', $account->mail, $language, $params);
 
   // Notify user that e-mail was sent and return to user edit form.
   drupal_set_message(t('A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
@@ -1136,25 +1131,30 @@ function logintoboggan_mail($key, &$message, $params) {
 
   $variables = user_mail_tokens($params['account'], $language);
   // Customize special tokens.
-  $variables['!uri'] = substr($base_url, strlen(_logintoboggan_protocol() .'://'));
+  $variables['!uri_brief'] = substr($base_url, strlen(_logintoboggan_protocol() .'://'));
   if (isset($params['login_url'])) {
     $variables['!login_url'] = $params['login_url'];
   }
 
-  if ($key == 'register_pending_approval_admin') {
-    $variables['!validating_url'] = $params['validating_url'];
-    $message['subject'] .= t("(!site) Account application for !username", $variables, $langcode);
-    $reg_pass_set = !variable_get('user_email_verification', TRUE);
-    if ($reg_pass_set) {
-      $message['body'][] = t("!username has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!edit_uri", $variables, $langcode);
-    }
-    else {
-      $message['body'][] = t("!username has applied for an account.\n\n!edit_uri", $variables, $langcode);
-    }
-  }
-  else {
-    $message['subject'] .= _user_mail_text($key .'_subject', $language, $variables);
-    $message['body'][] = _user_mail_text($key .'_body', $language, $variables);
+  switch ($key) {
+    case 'register_pending_approval_admin':
+      $variables['!validating_url'] = $params['validating_url'];
+      $message['subject'] .= t("(!site) Account application for !username", $variables, $langcode);
+      $reg_pass_set = !variable_get('user_email_verification', TRUE);
+      if ($reg_pass_set) {
+        $message['body'][] = t("!username has applied for an account, and has automatically received the permissions of the LoginToboggan validating role.  To give the user full site permissions, click the link below:\n\n!validating_url\n\nAlternatively, you may visit their user account listed below and remove them from the validating role.\n\n!edit_uri", $variables, $langcode);
+      }
+      else {
+        $message['body'][] = t("!username has applied for an account.\n\n!edit_uri", $variables, $langcode);
+      }
+      break;
+    case 'logintoboggan_resend_validation':
+      $message['subject'] .= strtr(variable_get('user_mail_register_no_approval_required_subject', _user_mail_text('register_no_approval_required_subject')), $variables);
+      $message['body'][] = strtr(variable_get('user_mail_register_no_approval_required_body', _user_mail_text('register_no_approval_required_body')), $variables);
+      break;
+    default:
+      $message['subject'] .= strtr(variable_get('user_mail_'. $key .'_subject', _user_mail_text($key .'_subject')), $variables);
+      $message['body'][] = strtr(variable_get('user_mail_'. $key .'_body', _user_mail_text($key .'_body')), $variables);
   }
 }
 
