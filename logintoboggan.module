@@ -494,7 +494,7 @@ function logintoboggan_menu() {
 function logintoboggan_revalidate_access($uid) {
   global $user;
 
-  return $user->uid == $uid;
+  return $user->uid == $uid || user_access('administer users');
 }
 
 /**
@@ -976,8 +976,9 @@ function logintoboggan_eml_rehash($password, $timestamp, $mail){
  */
 function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
   global $user;
-  if ($op == 'form' && $category == 'account' && $user->uid == arg(1)) {
-    // User is editing their own account settings
+  if ($op == 'form' && $category == 'account' && ($user->uid == $user_edit->uid || user_access('administer users'))) {
+    // User is editing their own account settings, or user admin
+    // is editing their account.
     if (!variable_get('user_email_verification', TRUE) && array_key_exists(logintoboggan_validating_id(), $user_edit->roles) && variable_get('user_register', 1) == 1) {
       // User is still in pre-authorized role; display link to re-send e-mail.
       $form['revalidate'] = array(
@@ -1029,8 +1030,14 @@ function logintoboggan_resend_validation($uid) {
   // Prepare and send e-mail.
   drupal_mail('logintoboggan', 'logintoboggan_resend_validation', $account->mail, $language, $params);
 
-  // Notify user that e-mail was sent and return to user edit form.
-  drupal_set_message(t('A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
+  // Notify admin or user that e-mail was sent and return to user edit form.
+  if (user_access('administer users')) {
+    drupal_set_message(t("A validation e-mail has been sent to the user's e-mail address."));
+  }
+  else {
+    drupal_set_message(t('A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.'));
+  }
+
   drupal_goto('user/'. $account->uid .'/edit');
 }
 
