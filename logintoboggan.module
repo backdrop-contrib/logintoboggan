@@ -773,20 +773,34 @@ function logintoboggan_denied() {
 function logintoboggan_destination() {
   // Drupal has reset $_GET[q], so we need a workaround.
   if ($internal_path = substr(request_uri(), strlen(base_path()))) {
-    // Clean URLs enabled, just pass destination through.
-    if (variable_get('clean_url', 0)) {
-      $_REQUEST['destination'] = $internal_path;
-    }
     // Clean URLs disabled, so break apart the query string and
     // pull out the path.
-    else {
+    if (!variable_get('clean_url', 0)) {
       $internal_path = parse_url($internal_path);
       $queryarray = explode('&', $internal_path['query']);
       $path = str_replace('q=', '', $queryarray[0]);
       unset($queryarray[0]);
       $query = !empty($queryarray) ? '?'. implode('&', $queryarray) : '';
-      $_REQUEST['destination'] = $path . $query;
+      $internal_path = $path . $query;
     }
+    // If the language path prefixing is enabled remove it from the path.
+    switch (variable_get('language_negotiation', LANGUAGE_NEGOTIATION_NONE)) {
+      case LANGUAGE_NEGOTIATION_PATH_DEFAULT:
+      case LANGUAGE_NEGOTIATION_PATH:
+        $args = explode('/', $internal_path);
+        $prefix = array_shift($args);
+
+        // Search prefix within enabled languages.
+        $languages = language_list('enabled');
+        foreach ($languages[1] as $language) {
+          if (!empty($language->prefix) && $language->prefix == $prefix) {
+            // Found a match, rebuild the path without the language.
+            $internal_path = implode('/', $args);
+            break;
+          }
+        }
+    }
+    $_REQUEST['destination'] = $internal_path;
   }
   // Fall back to homepage.
   else {
