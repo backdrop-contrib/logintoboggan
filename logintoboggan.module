@@ -330,7 +330,7 @@ function logintoboggan_user_register_submit($form, &$form_state) {
     // Create new user account, administrator approval required.
     $mailkey = 'register_pending_approval';
 
-    $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />') . $message;
+    $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />Once it has been approved, you will receive an e-mail containing further instructions.');
   }
 
   // Mail the user.
