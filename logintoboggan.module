@@ -846,7 +846,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
   // Some redundant checks for extra security
   if ($timestamp < $current && is_numeric($uid) && $account = user_load(array('uid' => $uid)) ) {
     // No time out for first time login.
-    if ($account->uid && !empty($account) && $timestamp < $current &&
+    if (empty($account->login) && $account->uid && !empty($account) && $timestamp < $current &&
         $hashed_pass == logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail)) {
       watchdog('user', 'E-mail validation URL used for %name with timestamp @timestamp.', array('%name' => $account->name, '@timestamp' => $timestamp));
       // Update the user table noting user has logged in.
