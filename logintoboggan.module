@@ -96,7 +96,10 @@ For full site access, you will need to click on this link or copy and paste it i
 
 !login_url
 
-This will verify your account and log you into the site. In the future you will be able to log in using the username and password that you created during registration.
+This will verify your account and log you into the site. In the future you will be able to log in to !login_uri using the username and password that you created during registration:
+
+username: !username
+password: !password
 
 --  !site team');
   $form['foo'] = array(
