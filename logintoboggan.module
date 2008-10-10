@@ -846,11 +846,15 @@ function logintoboggan_validating_id() {
 function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 'login') {
 
   $current = time();
+  $uid = (int) $uid;
   // Some redundant checks for extra security
-  if ($timestamp < $current && is_numeric($uid) && $account = user_load(array('uid' => $uid)) ) {
+  if ($timestamp < $current && $uid && $account = user_load(array('uid' => $uid)) ) {
     // No time out for first time login.
-    if (empty($account->login) && $account->uid && !empty($account) && $timestamp < $current &&
-        $hashed_pass == logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail)) {
+    // This conditional checks that:
+    // - the user is still in the pre-auth role or didn't set
+    //   their own password.
+    // - the hashed password is correct.
+    if (((variable_get('user_email_verification', TRUE) && empty($account->login)) || array_key_exists(logintoboggan_validating_id(), $account->roles)) && $hashed_pass == logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail)) {
       watchdog('user', 'E-mail validation URL used for %name with timestamp @timestamp.', array('%name' => $account->name, '@timestamp' => $timestamp));
       // Update the user table noting user has logged in.
       // And this also makes this hashed password a one-time-only login.
