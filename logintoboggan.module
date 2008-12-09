@@ -437,6 +437,13 @@ function _logintoboggan_user_roles_alter(&$account) {
   if ($account->uid && $in_pre_auth_role) {
     if ($id != DRUPAL_AUTHENTICATED_RID) {
       unset($account->roles[DRUPAL_AUTHENTICATED_RID]);
+      // Reset the permissions cache.  Since the only
+      // goal here is to reset the cache, create a
+      // temporary account object for uid 1 -- this
+      // results in no hits on the database.
+      $temp_account = new stdClass();
+      $temp_account->uid = 1;
+      user_access('', $temp_account, TRUE);
     }
   }
 }
