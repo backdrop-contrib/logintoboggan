@@ -699,7 +699,7 @@ function logintoboggan_main_settings(&$form_state) {
     '#type' => 'textfield',
     '#title' => t('Redirect path on Confirmation'),
     '#default_value' => variable_get('logintoboggan_redirect_on_confirm', ''),
-    '#description' => t('Normally, after a user confirms their new account, they will be taken to their user page. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path.'),
+    '#description' => t('Normally, after a user confirms their new account, they will be taken to their user page. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path. In the case where users are not creating their own passwords, it is suggested to use <cite>user/%uid/edit</cite> here, so the user may set their password immediately after validating their account.'),
   );
 
   $form['other'] = array('#type' => 'fieldset',
@@ -962,14 +962,10 @@ function logintoboggan_process_login($account, $redirect = ''){
   user_module_invoke('login', $edit, $user);
 
   // In the special case where a user is validating but they did not create their
-  // own password, redirect them to the user edit page, with a final destination
-  // of the confirmation page, if it exists.
+  // own password, show a user message letting them know to change their password.
   if (variable_get('user_email_verification', TRUE)) {
     watchdog('user', 'User %name used one-time login link at time %timestamp.', array('%name' => $user->name, '%timestamp' => time()));
     drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to login. Please change your password.'));
-
-    $destination = $redirect['path'] ? 'destination='. url($redirect['path'], array('query' => $redirect['query'], 'fragment' => $redirect['fragment'])) : NULL;
-    drupal_goto('user/'. $user->uid .'/edit', $destination);
   }
 
   if ($redirect['path'] != '') {
