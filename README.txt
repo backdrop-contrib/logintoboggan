@@ -16,6 +16,9 @@ The Login Toboggan module improves the Drupal login system in an external module
    6. Optionally redirect the user to a specific page when using the 'immediate login' feature.
    7. Optionally redirect the user to a specific page upon validation of their e-mail address.
    8. Optionally display a user message indicating a successful login.
+   9. Optionally have unvalidated users purged from the system at a pre-defined interval
+      (please read the CAVEATS section of INSTALL.txt for important information on configuring
+      this feature!).
 
 Users who choose their own password can be automatically assigned to a selected 'non-authenticated' role. This role could have more permissions than anonymous but less than authenticated - thus preventing spoof accounts and spammers.  The user will only be removed from the non-authenticated role and granted authenticated permissions when they verify their account via a special email link, or when an administrator removes them from the non-authenticated role.
 
