@@ -548,6 +548,9 @@ function logintoboggan_theme() {
     'lt_login_link' => array(
       'arguments' => array(),
     ),
+    'lt_login_successful_message' => array(
+      'arguments' => array('account'),
+    ),
   );
 }
 
@@ -1028,7 +1031,7 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
       return $form;
     }
   } elseif ($op == 'login' && variable_get('logintoboggan_login_successful_message', 0)) {
-    drupal_set_message(t('Login successful.'));
+    drupal_set_message(theme('lt_login_successful_message', $user_edit));
   }
   elseif ($op == 'load') {
     // Just loaded the user into $user_edit.
@@ -1301,3 +1304,12 @@ function theme_lt_login_link() {
   }
 }
 
+/**
+ * Theme the login successful message.
+ *
+ * @param $account
+ *   A user object representing the user being logged in.
+ */
+function theme_lt_login_successful_message($account) {
+  return t('Login successful.');
+}
