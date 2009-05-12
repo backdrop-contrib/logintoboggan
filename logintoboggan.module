@@ -1027,20 +1027,28 @@ function logintoboggan_eml_rehash($password, $timestamp, $mail){
  */
 function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
   global $user;
-  if ($op == 'form' && $category == 'account' && ($user->uid == $user_edit->uid || user_access('administer users'))) {
+  if ($op == 'form' && $category == 'account') {
     // User is editing their own account settings, or user admin
     // is editing their account.
-    if (!variable_get('user_email_verification', TRUE) && array_key_exists(logintoboggan_validating_id(), $user_edit->roles) && variable_get('user_register', 1) == 1) {
-      // User is still in pre-authorized role; display link to re-send e-mail.
-      $form['revalidate'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Account validation'),
-        '#weight' => -10,
-      );
-      $form['revalidate']['revalidate_link'] = array(
-        '#value' => l(t('re-send validation e-mail'), 'toboggan/revalidate/'. $user_edit->uid),
-      );
-      return $form;
+    if ($user->uid == $user_edit->uid || user_access('administer users')) {
+      // Display link to re-send validation e-mail.
+      // Re-validate link appears if:
+      //   1. Users can create their own password.
+      //   2. User is still in the validating role.
+      //   3. Users can create accounts without admin approval.
+      //   4. The validating role is not the authorized user role.
+      $validating_id = logintoboggan_validating_id();
+      if (!variable_get('user_email_verification', TRUE) && array_key_exists($validating_id, $user_edit->roles) && (variable_get('user_register', 1) == 1) && ($validating_id > DRUPAL_AUTHENTICATED_RID)) {
+        $form['revalidate'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Account validation'),
+          '#weight' => -10,
+        );
+        $form['revalidate']['revalidate_link'] = array(
+          '#value' => l(t('re-send validation e-mail'), 'toboggan/revalidate/'. $user_edit->uid),
+        );
+        return $form;
+      }
     }
   } elseif ($op == 'login' && variable_get('logintoboggan_login_successful_message', 0)) {
     drupal_set_message(theme('lt_login_successful_message', $user_edit));
