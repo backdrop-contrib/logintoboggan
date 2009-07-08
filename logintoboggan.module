@@ -1072,6 +1072,32 @@ function logintoboggan_user($op, &$edit, &$user_edit, $category = NULL) {
       }
     }
   }
+  elseif ($op == 'update') {
+    // Only perform this check if:
+    //   1. An admin is editing the account.
+    //   2. Admin approval is required for new user accounts.
+    if (user_access('administer users') && variable_get('user_register', 1) == 2) {
+      // Test here for a valid pre-auth -- if the pre-auth is set to the auth
+      // user, then no further checking is necessary.
+      $validating_id = logintoboggan_validating_id();
+      $pre_auth = $validating_id != DRUPAL_AUTHENTICATED_RID;
+      if ($pre_auth) {
+        // Check to see if an admin has manually removed the pre-auth role from
+        // the user.  If so, send the account activation email.
+        // The logic here is a bit funky, but necessary because we have no way
+        // of knowing if a missing $edit['roles'][$validating_id] is because
+        // the pre-auth role was disabled on this page save or a previous save.
+        // So, we calculate a removal of the pre-auth role manually as follows:
+        //  1. The pre-auth role exists in the user's current roles.
+        //  2. There's an available $edit['roles'] array to examine.
+        //  3. The pre-auth role is not in the array.
+        if (array_key_exists($validating_id, $user_edit->roles) && isset($edit['roles']) && (!isset($edit['roles'][$validating_id]) || !$edit['roles'][$validating_id])) {
+          // Mail the user, letting them know their account now has auth user perms.
+          _user_mail_notify('status_activated', $user_edit);
+        }
+      }
+    }
+  }
 }
 
 /**
