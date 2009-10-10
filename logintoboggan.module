@@ -276,6 +276,22 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
         unset($form['options']['operation']['#options'][$add]["add_role-$id"]);
       }
       break;
+    // Password resets count as validating an email address, so remove the user
+    // from the pre-auth role if they are still in it.
+    case 'user_pass_reset':
+      // We only want to run this code when the user first hits the reset login
+      // form.
+      if (arg(5) != 'login' && ($uid = (int) arg(2))) {
+        if ($account = user_load(array('uid' => $uid))) {
+          $id = logintoboggan_validating_id();
+          $in_pre_auth_role = in_array($id, array_keys($account->roles));
+          if ($in_pre_auth_role) {
+            _logintoboggan_process_validation($account);
+            drupal_set_message(t('You have successfully validated your e-mail address.'));
+          }
+        }
+      }
+      break;
   }
 }
 
@@ -906,24 +922,7 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
       $validating_id = logintoboggan_validating_id();
       $pre_auth = !variable_get('user_email_verification', TRUE) && $validating_id != DRUPAL_AUTHENTICATED_RID;
 
-      // Remove the pre-auth role from the user, unless they haven't been approved yet.
-      if ($account->status) {
-        if ($pre_auth) {
-          db_query("DELETE FROM {users_roles} WHERE uid = %d AND rid = %d", $account->uid, $validating_id);
-          // Since we're passing $account around to the update hook, remove
-          // the pre-auth role from the roles array, and add in the auth user
-          // role.
-          $account->roles[DRUPAL_AUTHENTICATED_RID] = 'authenticated user';
-          unset($account->roles[$validating_id]);
-        }
-        // Allow other modules to react to email validation by invoking the user update hook.
-        // This should only be triggered if LT's custom validation is active.
-        if (!variable_get('user_email_verification', TRUE)) {
-          $edit = array();
-          $account->logintoboggan_email_validated = TRUE;
-          user_module_invoke('update', $edit, $account);
-        }
-      }
+      _logintoboggan_process_validation($account);
 
       // Where do we redirect after confirming the account?
       $redirect = _logintoboggan_process_redirect(variable_get('logintoboggan_redirect_on_confirm', ''), $account);
@@ -976,6 +975,32 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
   // Deny access, no more clues.
   // Everything will be in the watchdog's URL for the administrator to check.
   drupal_access_denied();
+}
+
+function _logintoboggan_process_validation($account) {
+  // Test here for a valid pre-auth -- if the pre-auth is set to the auth user, we
+  // handle things a bit differently.
+  $validating_id = logintoboggan_validating_id();
+  $pre_auth = !variable_get('user_email_verification', TRUE) && $validating_id != DRUPAL_AUTHENTICATED_RID;
+
+  // Remove the pre-auth role from the user, unless they haven't been approved yet.
+  if ($account->status) {
+    if ($pre_auth) {
+      db_query("DELETE FROM {users_roles} WHERE uid = %d AND rid = %d", $account->uid, $validating_id);
+      // Since we're passing $account around to the update hook, remove
+      // the pre-auth role from the roles array, and add in the auth user
+      // role.
+      $account->roles[DRUPAL_AUTHENTICATED_RID] = 'authenticated user';
+      unset($account->roles[$validating_id]);
+    }
+  }
+  // Allow other modules to react to email validation by invoking the user update hook.
+  // This should only be triggered if LT's custom validation is active.
+  if (!variable_get('user_email_verification', TRUE)) {
+    $edit = array();
+    $account->logintoboggan_email_validated = TRUE;
+    user_module_invoke('update', $edit, $account);
+  }
 }
 
 /**
