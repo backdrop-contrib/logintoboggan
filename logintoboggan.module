@@ -341,7 +341,8 @@ function logintoboggan_user_register_submit($form, &$form_state) {
     $roles[$validating_id] = 1;
   }
 
-  $account = user_save('', array_merge($form_state['values'], array('pass' => $pass, 'init' => $form_state['values']['mail'], 'roles' => $roles, 'status' => $status)));
+  $edit = array_merge($form_state['values'], array('pass' => $pass, 'init' => $form_state['values']['mail'], 'roles' => $roles, 'status' => $status));
+  $account = user_save('', $edit);
   // Add plain text password into user account to generate mail tokens.
   $account->password = $pass;
   $form_state['user'] = $account;
@@ -385,7 +386,7 @@ function logintoboggan_user_register_submit($form, &$form_state) {
 
   // Log the user in if they created the account and immediate login is enabled.
   if($reg_pass_set && variable_get('logintoboggan_immediate_login_on_register', TRUE)) {
-    $form_state['redirect'] = logintoboggan_process_login($account, $redirect);
+    $form_state['redirect'] = logintoboggan_process_login($account, $edit, $redirect);
   }
   else {
     // Redirect to the appropriate page.
@@ -940,7 +941,8 @@ function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 
             drupal_goto('');
           }
           else {
-            $redirect = logintoboggan_process_login($account, $redirect);
+            $edit = array();
+            $redirect = logintoboggan_process_login($account, $edit, $redirect);
             drupal_goto($redirect['path'], $redirect['query'], $redirect['fragment']);
           }
           break;
@@ -1007,9 +1009,18 @@ function _logintoboggan_process_validation($account) {
  * Actually log the user on
  *
  * @param object $account
+ *   The user object.
+ * @param array $edit
+ *   An array of form values if a form has been submitted.
+ * @param array $redirect
+ *   An array of key/value pairs describing a redirect location, in the form
+ *   that drupal_goto() will understand. Defaults to:
+ *     'path' => 'user/'. $user->uid
+ *     'query' => NULL
+ *     'fragment' => NULL
  */
 
-function logintoboggan_process_login($account, $redirect = ''){
+function logintoboggan_process_login($account, $edit, $redirect = array()){
   global $user;
   $user = $account;
 
@@ -1021,7 +1032,6 @@ function logintoboggan_process_login($account, $redirect = ''){
   // user has new permissions, so we clear their menu cache
   cache_clear_all($user->uid .':', 'cache_menu', TRUE);
 
-  $edit = array();
   user_module_invoke('login', $edit, $user);
 
   // In the special case where a user is validating but they did not create their
@@ -1031,7 +1041,7 @@ function logintoboggan_process_login($account, $redirect = ''){
     drupal_set_message(t('You have just used your one-time login link. It is no longer possible to use this link to login. Please change your password.'));
   }
 
-  if ($redirect['path'] != '') {
+  if (isset($redirect['path']) && $redirect['path'] != '') {
     return $redirect;
   }
 
