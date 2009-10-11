@@ -1028,7 +1028,7 @@ function logintoboggan_process_login($account, $redirect = ''){
   // own password, show a user message letting them know to change their password.
   if (variable_get('user_email_verification', TRUE)) {
     watchdog('user', 'User %name used one-time login link at time %timestamp.', array('%name' => $user->name, '%timestamp' => time()));
-    drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to login. Please change your password.'));
+    drupal_set_message(t('You have just used your one-time login link. It is no longer possible to use this link to login. Please change your password.'));
   }
 
   if ($redirect['path'] != '') {
