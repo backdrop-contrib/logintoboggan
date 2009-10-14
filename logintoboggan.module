@@ -228,7 +228,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
       if ($key !== FALSE) {
         unset($form['#submit'][$key]);
       }
-      $form['#submit'] = array('logintoboggan_user_register_submit') + $form['#submit'];
+      array_unshift($form['#submit'],'logintoboggan_user_register_submit');
 
       if ($mail || $pass) {
         $form['#validate'][] = 'logintoboggan_user_register_validate';
