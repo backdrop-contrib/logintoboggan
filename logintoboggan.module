@@ -188,7 +188,7 @@ function logintoboggan_form_alter(&$form, $form_state, $form_id) {
       $form['submit']['#attributes']['tabindex']  = '3';
       if (variable_get('logintoboggan_login_with_email', 0)) {
         // LT's validation function must run first.
-        $form['#validate'] = array_merge(array('logintoboggan_user_login_validate'), $form['#validate']);
+        array_unshift($form['#validate'],'logintoboggan_user_login_validate');
         // Use theme functions to print the username field's textual labels.
         $form['name']['#title']       = theme('lt_username_title', $form_id);
         $form['name']['#description'] = theme('lt_username_description', $form_id);
@@ -400,7 +400,7 @@ function logintoboggan_user_register_submit($form, &$form_state) {
  * @ingroup logintoboggan_form
  */
 function logintoboggan_user_login_validate($form, &$form_state) {
-  if (isset($form_state['values']['name'])) {
+  if (isset($form_state['values']['name']) && $form_state['values']['name']) {
     if ($name = db_result(db_query("SELECT name FROM {users} WHERE LOWER(mail) = LOWER('%s')", $form_state['values']['name']))) {
       form_set_value($form['name'], $name, $form_state);
     }
