@@ -755,6 +755,12 @@ function logintoboggan_main_settings(&$form_state) {
     '#default_value' => variable_get('logintoboggan_redirect_on_confirm', ''),
     '#description' => t('Normally, after a user confirms their new account, they will be taken to their user page. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path. In the case where users are not creating their own passwords, it is suggested to use <cite>user/%uid/edit</cite> here, so the user may set their password immediately after validating their account.'),
   );
+  $form['registration']['redirect']['logintoboggan_override_destination_parameter'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Override destination parameter'),
+    '#default_value' => variable_get('logintoboggan_override_destination_parameter', 1),
+    '#description' => t("Normally, when a Drupal redirect is performed, priority is given to the 'destination' parameter from the originating URL. With this setting enabled, LoginToboggan will attempt to override this behavior with any values set above."),
+  );
 
   $form['other'] = array('#type' => 'fieldset',
     '#title' => t('Other'),
@@ -1169,9 +1175,22 @@ function _logintoboggan_protocol() {
   return ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https' : 'http');
 }
 
+/**
+ * Transforms a URL fragment into a redirect array understood by drupal_goto().
+ *
+ * @param $redirect
+ *   The redirect string.
+ * @param $account
+ *   The user account object associated with the redirect.
+ */
 function _logintoboggan_process_redirect($redirect, $account) {
   $variables = array('%uid' => $account->uid);
   $redirect = parse_url(urldecode(strtr($redirect, $variables)));
+
+  // If there's a path set, override the destination parameter if necessary.
+  if ($redirect['path'] && variable_get('logintoboggan_override_destination_parameter', 1)) {
+    unset($_REQUEST['destination'], $_REQUEST['edit']['destination']);
+  }
 
   // Explicitly create query and fragment elements if not present already.
   $redirect['query'] = isset($redirect['query']) ? $redirect['query'] : NULL;

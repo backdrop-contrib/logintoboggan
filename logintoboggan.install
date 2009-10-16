@@ -172,6 +172,7 @@ function logintoboggan_uninstall() {
     'logintoboggan_login_successful_message',
     'logintoboggan_minimum_password_length',
     'logintoboggan_immediate_login_on_register',
+    'logintoboggan_override_destination_parameter',
   );
   foreach ($variables as $variable) {
   	variable_del($variable);
