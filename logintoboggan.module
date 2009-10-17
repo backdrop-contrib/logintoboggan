@@ -162,7 +162,10 @@ function logintoboggan_form_system_modules_alter(&$form, &$form_state) {
  * @ingroup logintoboggan_core
  */
 function logintoboggan_form_logintoboggan_main_settings_alter(&$form, &$form_state) {
-  $form['#submit'][] = 'logintoboggan_flip_user_email_verification';
+  // Ensure a valid submit array.
+  $form['#submit'] = is_array($form['#submit']) ? $form['#submit'] : array();
+  // Make this submit handler run first.
+  array_unshift($form['#submit'], 'logintoboggan_flip_user_email_verification');
 }
 
 /**
@@ -604,7 +607,7 @@ function logintoboggan_menu() {
   $items = array();
 
   // Settings page.
-  $items['admin/user/logintoboggan'] = array(
+  $items['admin/config/system/logintoboggan'] = array(
     'title' => 'LoginToboggan',
     'description' => 'Set up custom login options like instant login, login redirects, pre-authorized validation roles, etc.',
     'page callback' => 'drupal_get_form',
@@ -797,7 +800,7 @@ function logintoboggan_main_settings(&$form_state) {
   else {
     $help_text = '';
   }
-  $form['registration']['user_email_verification'] = array(
+  $form['registration']['logintoboggan_user_email_verification'] = array(
     '#type' => 'checkbox',
     '#title' => t('Set password'),
     '#default_value' => !variable_get('user_email_verification', TRUE) ? 1 : 0,
@@ -1299,8 +1302,9 @@ function logintoboggan_site_403_validate($form, &$form_state) {
  * of it's current core behavior.
  */
 function logintoboggan_flip_user_email_verification($form, &$form_state) {
-  $value = $form_state['values']['user_email_verification'] ? FALSE : TRUE;
+  $value = $form_state['values']['logintoboggan_user_email_verification'] ? FALSE : TRUE;
   variable_set('user_email_verification', $value);
+  unset($form_state['values']['logintoboggan_user_email_verification']);
 }
 
 /**
