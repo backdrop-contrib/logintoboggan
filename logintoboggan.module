@@ -234,6 +234,9 @@ function logintoboggan_form_user_register_alter(&$form, &$form_state) {
   $mail = variable_get('logintoboggan_confirm_email_at_registration', 0);
   $pass = !variable_get('user_email_verification', TRUE);
 
+  // Ensure a valid submit array.
+  $form['#submit'] = is_array($form['#submit']) ? $form['#submit'] : array();
+
   // Replace core's registration function with LT's registration function.
   // Put the LT submit handler first, so other submit handlers have a valid
   // user to work with upon registration.
@@ -336,6 +339,8 @@ function logintoboggan_form_alter(&$form, &$form_state, $form_id) {
       $form['pass']['#attributes']['tabindex']    = '2';
       $form['submit']['#attributes']['tabindex']  = '3';
       if (variable_get('logintoboggan_login_with_email', 0)) {
+        // Ensure a valid validate array.
+        $form['#validate'] = is_array($form['#validate']) ? $form['#validate'] : array();
         // LT's validation function must run first.
         array_unshift($form['#validate'],'logintoboggan_user_login_validate');
         // Use theme functions to print the username field's textual labels.
