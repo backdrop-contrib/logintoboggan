@@ -360,7 +360,18 @@ function logintoboggan_form_alter(&$form, &$form_state, $form_id) {
       if (($form_id == 'user_login_block')) {
         $block_type = variable_get('logintoboggan_login_block_type', 0);
         if ($block_type == 1) {
-          $form = array('#value' => l(theme('lt_login_link'), 'user/login', array('query' => drupal_get_destination())));
+          // What would really be nice here is to start with a clean form, but
+          // we can't really do that, because drupal_prepare_form() has already
+          // been run, and we can't run it again in the _alter() hook, or we'll
+          // get into and endless loop.  Since we don't know exactly what's in
+          // the form, strip out all regular form elements and the handlers.
+          foreach (element_children($form) as $element) {
+            unset($form[$element]);
+          }
+          unset($form['#validate'], $form['#submit']);
+          $form['logintoboggan_login_link'] = array(
+            '#markup' => l(theme('lt_login_link'), 'user/login', array('query' => drupal_get_destination())),
+          );
         }
         elseif ($block_type == 2) {
           $form  = _logintoboggan_toggleboggan($form);
@@ -747,7 +758,7 @@ function _logintoboggan_toggleboggan ($form) {
   $options = array(
     'attributes' => array(
       'id' => 'toboggan-login-link',
-      'class' => 'toboggan-login-link',
+      'class' => array('toboggan-login-link'),
     ),
     'query' => drupal_get_destination(),
   );
@@ -758,8 +769,8 @@ function _logintoboggan_toggleboggan ($form) {
   //the block that will be toggled
   $pre .= '<div id="toboggan-login" class="user-login-block">';
 
-  $form['pre'] = array('#value' => $pre, '#weight' => -300);
-  $form['post'] = array('#value' => '</div></div>', '#weight' => 300);
+  $form['pre'] = array('#markup' => $pre, '#weight' => -300);
+  $form['post'] = array('#markup' => '</div></div>', '#weight' => 300);
   return $form;
 }
 
