@@ -1,12 +1,26 @@
 <?php
 // $Id$
 
+/**
+ * Implement hook_update_last_removed().
+ */
 function logintoboggan_update_last_removed() {
   return 6001;
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implement hook_disable().
+ *
+ */
+function logintoboggan_disable() {
+  // Clean up the custom access denied path if it's set.
+  if (variable_get('site_403', '') == 'toboggan/denied') {
+    variable_set('site_403', '');
+  }
+}
+
+/**
+ * Implement hook_uninstall().
  */
 function logintoboggan_uninstall() {
   $variables = array(
