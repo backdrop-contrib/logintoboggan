@@ -165,7 +165,7 @@ function logintoboggan_form_logintoboggan_main_settings_alter(&$form, &$form_sta
   // Ensure a valid submit array.
   $form['#submit'] = is_array($form['#submit']) ? $form['#submit'] : array();
   // Make this submit handler run first.
-  array_unshift($form['#submit'], 'logintoboggan_flip_user_email_verification');
+  array_unshift($form['#submit'], 'logintoboggan_main_settings_submit');
 }
 
 /**
@@ -882,19 +882,23 @@ function logintoboggan_main_settings(&$form_state) {
   );
 
   $site403 = variable_get('site_403', '');
-  if ($site403 == 'toboggan/denied'){
-    $disabled = '';
+  if ($site403 == '') {
+    $disabled = $default = '0';
+  }
+  elseif ($site403 == 'toboggan/denied') {
+    $disabled = '0';
+    $default = 'toboggan/denied';
   }
   else {
-    $disabled = $site403;
+    $disabled = $default = $site403;
   }
   $options = array($disabled => $_disabled, 'toboggan/denied' => $_enabled);
 
-  $form['other']['site_403'] = array(
+  $form['other']['logintoboggan_site_403'] = array(
     '#type' => 'radios',
     '#title' => t('Present login form on access denied (403)'),
     '#options' => $options,
-    '#default_value' => $site403,
+    '#default_value' => $default,
     '#description' => t('Anonymous users will be presented with a login form along with an access denied message.')
   );
   $form['other']['logintoboggan_login_successful_message'] = array(
@@ -1298,13 +1302,19 @@ function logintoboggan_site_403_validate($form, &$form_state) {
 }
 
 /**
- * Flips the value of the user_email_settings variable.  This setting is less confusing when it works the opposite
- * of it's current core behavior.
+ * Takes custom settings on the main settings page, transforms them into the
+ * appropriate core setting, and cleans up the custom values.
  */
-function logintoboggan_flip_user_email_verification($form, &$form_state) {
-  $value = $form_state['values']['logintoboggan_user_email_verification'] ? FALSE : TRUE;
-  variable_set('user_email_verification', $value);
+function logintoboggan_main_settings_submit($form, &$form_state) {
+  // User email verification setting.
+  $user_email_verification = $form_state['values']['logintoboggan_user_email_verification'] ? FALSE : TRUE;
+  variable_set('user_email_verification', $user_email_verification);
   unset($form_state['values']['logintoboggan_user_email_verification']);
+
+  // Site 403 setting.
+  $site_403 = $form_state['values']['logintoboggan_site_403'] == '0' ? '' : $form_state['values']['logintoboggan_site_403'];
+  variable_set('site_403', $site_403);
+  unset($form_state['values']['logintoboggan_site_403']);
 }
 
 /**
