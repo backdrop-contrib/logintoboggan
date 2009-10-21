@@ -2,6 +2,11 @@
 // $Id$
 
 /**
+* @file
+* Install, update and uninstall functions for the logintoboggan module.
+*/
+
+/**
  * Implement hook_update_last_removed().
  */
 function logintoboggan_update_last_removed() {

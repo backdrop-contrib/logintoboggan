@@ -23,7 +23,7 @@
  */
 
 /**
- * Implementation of hook_cron().
+ * Implement hook_cron().
  */
 function logintoboggan_cron() {
   // If set password is enabled, and a purge interval is set, check for
@@ -42,20 +42,21 @@ function logintoboggan_cron() {
       $purged_users = array();
       // Delete the users from the system.
       foreach ($accounts as $account) {
-        user_delete(array(), $account->uid);
+        user_cancel(array(), $account->uid, 'user_cancel_delete');
         $purged_users[] = check_plain($account->name);
       }
 
       // Log the purged users.
       if (!empty($purged_users)) {
-        watchdog('logintoboggan', 'Purged the following unvalidated users: !purged_users', array('!purged_users' => theme('item_list', $purged_users)));
+        batch_process(drupal_get_destination());
+        watchdog('logintoboggan', 'Purged the following unvalidated users: !purged_users', array('!purged_users' => theme('item_list', array('items' => $purged_users))));
       }
     }
   }
 }
 
 /**
- * Implementation of hook_help().
+ * Implement hook_help().
  */
 function logintoboggan_help($path, $arg) {
   switch ($path) {
@@ -663,7 +664,7 @@ function logintoboggan_user_edit_validate($form, &$form_state) {
 }
 
 /**
- * Implementation of hook_init()
+ * Implement hook_init()
  *
  * @ingroup logintoboggan_core
  */
@@ -702,7 +703,7 @@ function _logintoboggan_user_roles_alter($account) {
 }
 
 /**
- * Implementation of hook_menu()
+ * Implement hook_menu()
  *
  * @ingroup logintoboggan_core
  */
@@ -1354,7 +1355,7 @@ function logintoboggan_main_settings_submit($form, &$form_state) {
 }
 
 /**
- * Implementation of hook_mail_alter().
+ * Implement hook_mail_alter().
  */
 function logintoboggan_mail_alter(&$message) {
   if ($message['id'] == 'user_register_pending_approval_admin') {
