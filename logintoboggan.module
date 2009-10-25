@@ -766,28 +766,28 @@ function logintoboggan_revalidate_access($uid) {
 function logintoboggan_theme($existing, $type, $theme, $path) {
   return array(
     'lt_username_title' => array(
-      'arguments' => array('form_id' => NULL),
+      'variables' => array('form_id' => NULL),
     ),
     'lt_username_description' => array(
-      'arguments' => array('form_id' => NULL),
+      'variables' => array('form_id' => NULL),
     ),
     'lt_password_title' => array(
-      'arguments' => array('form_id' => NULL),
+      'variables' => array('form_id' => NULL),
     ),
     'lt_password_description' => array(
-      'arguments' => array('form_id' => NULL),
+      'variables' => array('form_id' => NULL),
     ),
     'lt_access_denied' => array(
-      'arguments' => array(),
+      'variables' => array(),
     ),
     'lt_loggedinblock' => array(
-      'arguments' => array('account' => NULL),
+      'variables' => array('account' => NULL),
     ),
     'lt_login_link' => array(
-      'arguments' => array(),
+      'variables' => array(),
     ),
     'lt_login_successful_message' => array(
-      'arguments' => array('account' => NULL),
+      'variables' => array('account' => NULL),
     ),
   );
 }
