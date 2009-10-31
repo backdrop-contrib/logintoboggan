@@ -812,7 +812,10 @@ function logintoboggan_block_view($delta = '') {
   switch ($delta) {
     case 'logintoboggan_logged_in':
       if ($user->uid) {
-        $block['content'] =  theme('lt_loggedinblock', array('account' => $user));
+        $block['content'] =  array(
+          '#theme' => 'lt_loggedinblock',
+          '#account' => $user,
+        );
       }
       break;
   }
