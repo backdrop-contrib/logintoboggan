@@ -652,7 +652,7 @@ function logintoboggan_user_edit_validate($form, &$form_state) {
     }
   }
 
-  if (strlen($edit['pass'])) {
+  if (!empty($edit['pass'])) {
     // if we're changing the password, validate it
     $pass_err = logintoboggan_validate_pass($edit['pass']);
     if ($pass_err) {
