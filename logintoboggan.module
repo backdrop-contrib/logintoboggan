@@ -163,7 +163,6 @@ function logintoboggan_form_logintoboggan_main_settings_alter(&$form, &$form_sta
  * @ingroup logintoboggan_core
  */
 function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
-  global $user;
 
   if ($form['#user_category'] == 'account') {
     $account = $form['#user'];
@@ -171,7 +170,7 @@ function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
 
     // User is editing their own account settings, or user admin
     // is editing their account.
-    if ($user->uid == $account->uid || user_access('administer users')) {
+    if ($GLOBALS['user']->uid == $account->uid || user_access('administer users')) {
       // Display link to re-send validation e-mail.
       // Re-validate link appears if:
       //   1. Users can create their own password.
@@ -752,9 +751,7 @@ function logintoboggan_menu() {
  * Access check for user revalidation.
  */
 function logintoboggan_revalidate_access($uid) {
-  global $user;
-
-  return $user->uid && ($user->uid == $uid || user_access('administer users'));
+  return $GLOBALS['user']->uid && ($GLOBALS['user']->uid == $uid || user_access('administer users'));
 }
 
 /**
@@ -1030,8 +1027,7 @@ function logintoboggan_main_settings(&$form_state) {
 }
 
 function logintoboggan_denied() {
-  global $user;
-  if ($user->uid == 0) {
+  if ($GLOBALS['user']->uid == 0) {
     // Output the user login form.
     drupal_set_title(t('Access Denied / User Login'));
     $output = drupal_get_form('user_login');
