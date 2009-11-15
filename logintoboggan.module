@@ -353,9 +353,6 @@ function logintoboggan_form_alter(&$form, &$form_state, $form_id) {
           '#weight' => -50,
         );
       }
-      $form['name']['#attributes']['tabindex']    = '1';
-      $form['pass']['#attributes']['tabindex']    = '2';
-      $form['submit']['#attributes']['tabindex']  = '3';
       if (variable_get('logintoboggan_login_with_email', 0)) {
         // Ensure a valid validate array.
         $form['#validate'] = is_array($form['#validate']) ? $form['#validate'] : array();
