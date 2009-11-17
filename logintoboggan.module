@@ -716,10 +716,12 @@ function logintoboggan_menu() {
   );
 
   // Callback for user validate routine.
-  $items['user/validate'] = array(
+  $items['user/validate/%user/%/%'] = array(
     'title' => 'Validate e-mail address',
     'page callback' => 'logintoboggan_validate_email',
-    'access callback' => TRUE,
+    'page arguments' => array(2, 3, 4),
+    'access callback' => 'logintoboggan_validate_email_access',
+    'access arguments' => array(2, 3),
     'type' => MENU_CALLBACK,
   );
 
@@ -732,7 +734,7 @@ function logintoboggan_menu() {
   );
 
   //callback for re-sending validation e-mail
-  $items['toboggan/revalidate'] = array(
+  $items['toboggan/revalidate/%user'] = array(
     'title' => 'Re-send validation e-mail',
     'page callback' => 'logintoboggan_resend_validation',
     'page arguments' => array(2),
@@ -747,8 +749,8 @@ function logintoboggan_menu() {
 /**
  * Access check for user revalidation.
  */
-function logintoboggan_revalidate_access($uid) {
-  return $GLOBALS['user']->uid && ($GLOBALS['user']->uid == $uid || user_access('administer users'));
+function logintoboggan_revalidate_access($account) {
+  return $GLOBALS['user']->uid && ($GLOBALS['user']->uid == $account->uid || user_access('administer users'));
 }
 
 /**
@@ -1072,86 +1074,82 @@ function logintoboggan_validating_id() {
   return variable_get('logintoboggan_pre_auth_role', DRUPAL_AUTHENTICATED_RID);
 }
 
+/**
+ * Access check for user e-mail validation.
+ */
+function logintoboggan_validate_email_access($account, $timestamp) {
+  return $account->uid && $timestamp < REQUEST_TIME;
+}
 
 /**
  * Menu callback; process validate the e-mail address as a one time URL,
  * and redirects to the user page on success.
  */
-function logintoboggan_validate_email($uid, $timestamp, $hashed_pass, $action = 'login') {
+function logintoboggan_validate_email($account, $timestamp, $hashed_pass, $action = 'login') {
+  // No time out for first time login.
+  // This conditional checks that:
+  // - the user is still in the pre-auth role or didn't set
+  //   their own password.
+  // - the hashed password is correct.
+  if (((variable_get('user_email_verification', TRUE) && empty($account->login)) || array_key_exists(logintoboggan_validating_id(), $account->roles)) && $hashed_pass == logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail)) {
+    watchdog('user', 'E-mail validation URL used for %name with timestamp @timestamp.', array('%name' => $account->name, '@timestamp' => $timestamp));
 
-  $current = REQUEST_TIME;
-  $uid = (int) $uid;
-  // Some redundant checks for extra security
-  if ($timestamp < $current && $uid && $account = user_load($uid) ) {
-    // No time out for first time login.
-    // This conditional checks that:
-    // - the user is still in the pre-auth role or didn't set
-    //   their own password.
-    // - the hashed password is correct.
-    if (((variable_get('user_email_verification', TRUE) && empty($account->login)) || array_key_exists(logintoboggan_validating_id(), $account->roles)) && $hashed_pass == logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail)) {
-      watchdog('user', 'E-mail validation URL used for %name with timestamp @timestamp.', array('%name' => $account->name, '@timestamp' => $timestamp));
+    // Test here for a valid pre-auth -- if the pre-auth is set to the auth user, we
+    // handle things a bit differently.
+    $validating_id = logintoboggan_validating_id();
+    $pre_auth = !variable_get('user_email_verification', TRUE) && $validating_id != DRUPAL_AUTHENTICATED_RID;
 
-      // Test here for a valid pre-auth -- if the pre-auth is set to the auth user, we
-      // handle things a bit differently.
-      $validating_id = logintoboggan_validating_id();
-      $pre_auth = !variable_get('user_email_verification', TRUE) && $validating_id != DRUPAL_AUTHENTICATED_RID;
+    _logintoboggan_process_validation($account);
 
-      _logintoboggan_process_validation($account);
+    // Where do we redirect after confirming the account?
+    $redirect = _logintoboggan_process_redirect(variable_get('logintoboggan_redirect_on_confirm', ''), $account);
 
-      // Where do we redirect after confirming the account?
-      $redirect = _logintoboggan_process_redirect(variable_get('logintoboggan_redirect_on_confirm', ''), $account);
-
-      switch ($action) {
-        // Proceed with normal user login, as long as it's open registration and their
-        // account hasn't been blocked.
-        case 'login':
-          // Only show the validated message if there's a valid pre-auth role.
-          if ($pre_auth) {
-            drupal_set_message(t('You have successfully validated your e-mail address.'));
-          }
-          if (!$account->status) {
-            drupal_set_message(t('Your account is currently blocked -- login cancelled.'), 'error');
-            drupal_goto('');
-          }
-          else {
-            $edit = array();
-            $redirect = logintoboggan_process_login($account, $edit, $redirect);
-            call_user_func_array('drupal_goto', $redirect);
-          }
-          break;
-        // Admin validation.
-        case 'admin':
-          // TODO: is this still necessary?
-          // user has new permissions, so we clear their menu cache
-          cache_clear_all($account->uid .':', 'cache_menu', TRUE);
-
-          if ($pre_auth) {
-            // Mail the user, letting them know their account now has auth user perms.
-            _user_mail_notify('status_activated', $account);
-          }
-
-          drupal_set_message(t('You have successfully validated %user.', array('%user' => $account->name)));
-          drupal_goto("user/$account->uid/edit");
-          break;
-        // Catch all.
-        default:
-          // TODO: is this still necessary?
-          // user has new permissions, so we clear their menu cache
-          cache_clear_all($account->uid .':', 'cache_menu', TRUE);
-
-          drupal_set_message(t('You have successfully validated %user.', array('%user' => $account->name)));
+    switch ($action) {
+      // Proceed with normal user login, as long as it's open registration and their
+      // account hasn't been blocked.
+      case 'login':
+        // Only show the validated message if there's a valid pre-auth role.
+        if ($pre_auth) {
+          drupal_set_message(t('You have successfully validated your e-mail address.'));
+        }
+        if (!$account->status) {
+          drupal_set_message(t('Your account is currently blocked -- login cancelled.'), 'error');
           drupal_goto('');
-          break;
-      }
-    }
-    else {
-      drupal_set_message(t("Sorry, you can only use your validation link once for security reasons. Please !login with your username and password instead now.", array('!login' => l(t('login'),'user/login'))),'error');
+        }
+        else {
+          $edit = array();
+          $redirect = logintoboggan_process_login($account, $edit, $redirect);
+          call_user_func_array('drupal_goto', $redirect);
+        }
+        break;
+      // Admin validation.
+      case 'admin':
+        // TODO: is this still necessary?
+        // user has new permissions, so we clear their menu cache
+        cache_clear_all($account->uid .':', 'cache_menu', TRUE);
+
+        if ($pre_auth) {
+          // Mail the user, letting them know their account now has auth user perms.
+          _user_mail_notify('status_activated', $account);
+        }
+
+        drupal_set_message(t('You have successfully validated %user.', array('%user' => $account->name)));
+        drupal_goto("user/$account->uid/edit");
+        break;
+      // Catch all.
+      default:
+        // TODO: is this still necessary?
+        // user has new permissions, so we clear their menu cache
+        cache_clear_all($account->uid .':', 'cache_menu', TRUE);
+
+        drupal_set_message(t('You have successfully validated %user.', array('%user' => $account->name)));
+        drupal_goto('');
+        break;
     }
   }
-
-  // Deny access, no more clues.
-  // Everything will be in the watchdog's URL for the administrator to check.
-  drupal_access_denied();
+  else {
+    drupal_set_message(t("Sorry, you can only use your validation link once for security reasons. Please !login with your username and password instead now.", array('!login' => l(t('login'),'user/login'))),'error');
+  }
 }
 
 function _logintoboggan_process_validation($account) {
@@ -1281,9 +1279,7 @@ function logintoboggan_user_update(&$edit, $account, $category) {
 /**
  * Re-sends validation e-mail to user specified by $uid.
  */
-function logintoboggan_resend_validation($uid) {
-
-  $account = user_load($uid);
+function logintoboggan_resend_validation($account) {
   $account->password = t('If required, you may reset your password from: !url', array('!url' => url('user/password', array('absolute' => TRUE))));
 
   _user_mail_notify('register_no_approval_required', $account);
