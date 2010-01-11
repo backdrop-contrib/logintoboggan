@@ -872,7 +872,7 @@ function logintoboggan_main_settings(&$form_state) {
 
   $form['login'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Login'),
+    '#title' => t('Log in'),
   );
 
   $form['login']['logintoboggan_login_with_email'] = array(
@@ -1008,7 +1008,7 @@ function logintoboggan_main_settings(&$form_state) {
     '#title' => t('Display login successful message'),
     '#options' => array($_disabled, $_enabled),
     '#default_value' => variable_get('logintoboggan_login_successful_message', 0),
-    '#description' => t('If enabled, users will receive a \'Login successful\' message upon login.')
+    '#description' => t('If enabled, users will receive a \'Log in successful\' message upon login.')
   );
   $min_pass_options = array(t('None'));
   for ($i = 2; $i < 30; $i++) {
@@ -1028,7 +1028,7 @@ function logintoboggan_main_settings(&$form_state) {
 function logintoboggan_denied() {
   if ($GLOBALS['user']->uid == 0) {
     // Output the user login form.
-    drupal_set_title(t('Access Denied / User Login'));
+    drupal_set_title(t('Access Denied / User log in'));
     $output = drupal_get_form('user_login');
     drupal_set_page_content($output);
     // Return page attributes, hide blocks.
@@ -1453,10 +1453,10 @@ function theme_lt_loggedinblock($variables){
 function theme_lt_login_link($variables) {
   // Only display register text if registration is allowed.
   if (variable_get('user_register', 1)) {
-    return t('Login/Register');
+    return t('Log in/Register');
   }
   else {
-    return t('Login');
+    return t('Log in');
   }
 }
 
@@ -1467,5 +1467,5 @@ function theme_lt_login_link($variables) {
  *   A user object representing the user being logged in.
  */
 function theme_lt_login_successful_message($variables) {
-  return t('Login successful for %name.', array('%name' => $variables['account']->name));
+  return t('Log in successful for %name.', array('%name' => $variables['account']->name));
 }
