@@ -25,6 +25,20 @@ function logintoboggan_disable() {
 }
 
 /**
+ * Remove hardcoded numeric deltas from blocks.
+ */
+function logintoboggan_update_7000(&$sandbox) {
+  // Get an array of the renamed block deltas, organized by module.
+  $renamed_deltas = array(
+    'logintoboggan' => array(
+      '0' => 'logintoboggan_logged_in',
+    ),
+  );
+
+  update_fix_d7_block_deltas($sandbox, $renamed_deltas);
+}
+
+/**
  * Implement hook_uninstall().
  */
 function logintoboggan_uninstall() {
