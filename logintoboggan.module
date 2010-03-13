@@ -40,11 +40,15 @@ function logintoboggan_cron() {
       ));
 
       $purged_users = array();
-      // Delete the users from the system.
+      $uids = array();
+
       foreach ($accounts as $account) {
-        user_cancel(array(), $account->uid, 'user_cancel_delete');
+        $uids[] = $account->uid;
         $purged_users[] = check_plain($account->name);
       }
+
+      // Delete the users from the system.
+      user_delete_multiple($uids);
 
       // Log the purged users.
       if (!empty($purged_users)) {
