@@ -871,8 +871,8 @@ function _logintoboggan_toggleboggan ($form) {
 
 function logintoboggan_main_settings(&$form_state) {
 
-  $_disabled = t('disabled');
-  $_enabled = t('enabled');
+  $_disabled = t('Disabled');
+  $_enabled = t('Enabled');
 
   $form['login'] = array(
     '#type' => 'fieldset',
@@ -964,14 +964,14 @@ function logintoboggan_main_settings(&$form_state) {
 
   $form['registration']['redirect']['logintoboggan_redirect_on_register'] = array(
     '#type' => 'textfield',
-    '#title' => t('Redirect path on Registration'),
+    '#title' => t('Redirect path on registration'),
     '#default_value' => variable_get('logintoboggan_redirect_on_register', ''),
     '#description' => t('Normally, after a user registers a new account, they will be taken to the front page, or to their user page if you specify <cite>Immediate login</cite> above. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path.'),
   );
 
   $form['registration']['redirect']['logintoboggan_redirect_on_confirm'] = array(
     '#type' => 'textfield',
-    '#title' => t('Redirect path on Confirmation'),
+    '#title' => t('Redirect path on confirmation'),
     '#default_value' => variable_get('logintoboggan_redirect_on_confirm', ''),
     '#description' => t('Normally, after a user confirms their new account, they will be taken to their user page. Leave this setting blank if you wish to keep the default behavior. If you wish the user to go to a page of your choosing, then enter the path for it here. For instance, you may redirect them to a static page such as <cite>node/35</cite>, or to the <cite>&lt;front&gt;</cite> page. You may also use <em>%uid</em> as a variable, and the user\'s user ID will be substituted in the path. In the case where users are not creating their own passwords, it is suggested to use <cite>user/%uid/edit</cite> here, so the user may set their password immediately after validating their account.'),
   );
