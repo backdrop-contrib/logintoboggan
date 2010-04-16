@@ -195,10 +195,11 @@ function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
     }
 
     $id = logintoboggan_validating_id();
+    $pre_auth = !variable_get('user_email_verification', TRUE) && $id != DRUPAL_AUTHENTICATED_RID;
     $in_pre_auth_role = in_array($id, array_keys($account->roles));
     // Messages are only necessary for user admins, and aren't necessary if
-    // pre-auth role is authenticated user.
-    if (user_access('administer users') && isset($form['account']['roles']) && $id != DRUPAL_AUTHENTICATED_RID) {
+    // there's no valid pre-auth role.
+    if (user_access('administer users') && isset($form['account']['roles']) && $pre_auth) {
       // User is still in the pre-auth role, so let the admin know.
       if ($in_pre_auth_role) {
         // This form element is necessary as a placeholder for the user's
@@ -297,8 +298,10 @@ function logintoboggan_form_user_register_form_alter(&$form, &$form_state) {
 function logintoboggan_form_user_admin_account_alter(&$form, &$form_state) {
   // Unset the ability to add the pre-auth role in the user admin interface.
   $id = logintoboggan_validating_id();
+  // Test here for a valid pre-auth -- we only remove this role if one exists.
+  $pre_auth = !variable_get('user_email_verification', TRUE) && $id != DRUPAL_AUTHENTICATED_RID;
   $add = t('Add a role to the selected users');
-  if ($id != DRUPAL_AUTHENTICATED_RID && isset($form['options']['operation']['#options'][$add]["add_role-$id"])) {
+  if ($pre_auth && isset($form['options']['operation']['#options'][$add]["add_role-$id"])) {
     unset($form['options']['operation']['#options'][$add]["add_role-$id"]);
   }
 }
