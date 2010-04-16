@@ -202,6 +202,10 @@ function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
     if (user_access('administer users') && isset($form['account']['roles']) && $pre_auth) {
       // User is still in the pre-auth role, so let the admin know.
       if ($in_pre_auth_role) {
+        // To reduce UI confusion, remove the disabled checkbox for the
+        // authenticated user role.
+        unset($form['account']['roles'][DRUPAL_AUTHENTICATED_RID]);
+
         // This form element is necessary as a placeholder for the user's
         // pre-auth setting on form load.  It's used to compare against the
         // submitted form values to see if the pre-auth role has been unchecked.
