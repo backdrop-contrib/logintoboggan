@@ -9,9 +9,12 @@ Installation
 1. Enable the module in the module listing page.
 2. In LoginToboggan settings (admin/user/logintoboggan), 
    check "Set password" option.
-3. For best results , uncheck the "Immediate login" option on 
-   LoginToboggan settings
-4. Thats it!!
+3. Thats it!!
+
+For best results, you may want to uncheck the "Immediate login" option on 
+LoginToboggan settings. This is just for cosmetic reasons, as in most use 
+cases you might want users to click on the verification link first before 
+actually letting them in the site. 
 
 Usage
 =====
