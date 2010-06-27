@@ -877,7 +877,7 @@ function _logintoboggan_toggleboggan ($form) {
   return $form;
 }
 
-function logintoboggan_main_settings(&$form_state) {
+function logintoboggan_main_settings() {
 
   $_disabled = t('Disabled');
   $_enabled = t('Enabled');
