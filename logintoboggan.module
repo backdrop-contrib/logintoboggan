@@ -259,27 +259,18 @@ function logintoboggan_form_user_register_form_alter(&$form, &$form_state) {
     //Display a confirm e-mail address box if option is enabled.
     if ($mail) {
 
-      $form['conf_mail'] = array('#type' => 'textfield',
+      $form['account']['conf_mail'] = array(
+        '#type' => 'textfield',
         '#title' => t('Confirm e-mail address'),
         '#weight' => -28,
         '#maxlength' => 64,
         '#description' => t('Please re-type your e-mail address to confirm it is accurate.'),
         '#required' => TRUE,
-        );
+      );
 
-      // Weight things properly so that the order is name, mail, conf_mail, then pass
-      if (isset($form['account'])) {
-        $form['account']['#weight'] = -50;  // Make sure account form group is at the top of the display.
-        $form['account']['name']['#weight'] = -30;
-        $form['account']['mail']['#weight'] = -29;
-        $form['account']['conf_mail'] = $form['conf_mail'];
-        unset($form['conf_mail']);
-        $form['account']['conf_mail']['#weight'] = -28;
-      }
-      else {
-        $form['name']['#weight'] = -30;
-        $form['mail']['#weight'] = -29;
-      }
+      // Weight things properly so that the order is name, mail, conf_mail.
+      $form['account']['name']['#weight'] = -30;
+      $form['account']['mail']['#weight'] = -29;
     }
     if ($pass) {
       $min_pass = variable_get('logintoboggan_minimum_password_length', 0);
