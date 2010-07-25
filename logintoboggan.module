@@ -183,7 +183,7 @@ function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
       //   3. Users can create accounts without admin approval.
       //   4. The validating role is not the authorized user role.
       $validating_id = logintoboggan_validating_id();
-      if (!variable_get('user_email_verification', TRUE) && array_key_exists($validating_id, $account->roles) && (variable_get('user_register', 1) == 1) && ($validating_id > DRUPAL_AUTHENTICATED_RID)) {
+      if (!variable_get('user_email_verification', TRUE) && array_key_exists($validating_id, $account->roles) && (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_VISITORS) && ($validating_id > DRUPAL_AUTHENTICATED_RID)) {
         $form['revalidate'] = array(
           '#type' => 'fieldset',
           '#title' => t('Account validation'),
@@ -214,7 +214,7 @@ function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
           '#type' => 'hidden',
           '#value' => '1',
         );
-        if ((variable_get('user_register', 1) == 2)) {
+        if (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) {
           $form['account']['status']['#description'] = t('If this user was created using the "Immediate Login" feature of LoginToboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site\'s pre-authorized role in the "Roles" section below, or they will not receive authenticated user permissions!');
         }
         $form['account']['roles']['#description'] = t("The user is assigned LoginToboggan's pre-authorized role, and is not currently receiving authenticated user permissions.");
@@ -468,7 +468,7 @@ function logintoboggan_tokens($type, $tokens, array $data = array(), array $opti
       switch ($name) {
         // Validating URL.
         case 'url':
-          $replacements[$original] = variable_get('user_register', 1) == 1 ? logintoboggan_eml_validate_url($account, $url_options) : NULL;
+          $replacements[$original] = variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_VISITORS ? logintoboggan_eml_validate_url($account, $url_options) : NULL;
           break;
       }
     }
@@ -503,7 +503,7 @@ function logintoboggan_user_register_submit($form, &$form_state) {
   }
   else {
     $pass = user_password();
-    $status = variable_get('user_register', 1) == 1;
+    $status = variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_VISITORS;
   }
 
   // The unset below is needed to prevent these form values from being saved as
@@ -544,7 +544,7 @@ function logintoboggan_user_register_submit($form, &$form_state) {
   $account->password = $pass;
 
   // Compose the appropriate user message--admin approvals don't require a validation email.
-  if($reg_pass_set && variable_get('user_register', 1) == 1) {
+  if($reg_pass_set && variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_VISITORS) {
     if ($pre_auth) {
       $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
     }
@@ -555,12 +555,12 @@ function logintoboggan_user_register_submit($form, &$form_state) {
     $message = t('Your password and further instructions have been sent to your e-mail address.');
   }
 
-  if (variable_get('user_register', 1) == 1) {
+  if (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_VISITORS) {
 
     // Create new user account, no administrator approval required.
     $mailkey = 'register_no_approval_required';
 
-  } elseif (variable_get('user_register', 1) == 2) {
+  } elseif (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) {
 
     // Create new user account, administrator approval required.
     $mailkey = 'register_pending_approval';
@@ -1459,7 +1459,7 @@ function theme_lt_loggedinblock($variables){
  */
 function theme_lt_login_link($variables) {
   // Only display register text if registration is allowed.
-  if (variable_get('user_register', 1)) {
+  if (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL)) {
     return t('Log in/Register');
   }
   else {
