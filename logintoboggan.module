@@ -237,6 +237,7 @@ function logintoboggan_form_user_register_form_alter(&$form, &$form_state) {
   // Admin created accounts are only validated by the module.
   if (user_access('administer users')) {
     $form['#validate'][] = 'logintoboggan_user_register_validate';
+    return;
   }
   $mail = variable_get('logintoboggan_confirm_email_at_registration', 0);
   $pass = !variable_get('user_email_verification', TRUE);
