@@ -1064,7 +1064,6 @@ function logintoboggan_validate_pass($pass) {
                    $pass)) {
     return t('The password contains an illegal character.');
   }
-  if (strlen($pass) > 30) return t('The password is too long: it must be less than 30 characters.');
   $min_pass_length = variable_get('logintoboggan_minimum_password_length', 0);
   if ($min_pass_length && strlen($pass) < $min_pass_length) return t("The password is too short: it must be at least %min_length characters.", array('%min_length' => $min_pass_length));
 }
