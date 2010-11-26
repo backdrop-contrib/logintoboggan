@@ -276,13 +276,7 @@ function logintoboggan_form_user_register_form_alter(&$form, &$form_state) {
     if ($pass) {
       $min_pass = variable_get('logintoboggan_minimum_password_length', 0);
       $length = $min_pass ? t('between !min and', array('!min' => $min_pass)) : t('no more than');
-      $pass_description = t('Please choose a password for your account; it must be !length 30 characters.', array('!length' => $length));
-      if (isset($form['account'])) {
-        $form['account']['pass']['#description'] = $pass_description;
-      }
-      else {
-        $form['pass']['#description'] = $pass_description;
-      }
+      $form['account']['pass']['#description'] = t('Please choose a password for your account; it must be !length 30 characters.', array('!length' => $length));
     }
   }
 }
