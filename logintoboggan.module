@@ -327,11 +327,14 @@ function logintoboggan_form_user_admin_permissions_alter(&$form, &$form_state) {
   // If the pre-auth role isn't the auth user, then add it as a setting.
   $id = logintoboggan_validating_id();
   if ($id != DRUPAL_AUTHENTICATED_RID) {
-    drupal_add_js(array(
-      'LoginToboggan' => array(
-        'preAuthID' => $id,
+    $form['#attached']['js'][] = array(
+      'data' = array(
+        'LoginToboggan' => array(
+          'preAuthID' => $id,
+        ),
       ),
-    ), 'setting');
+      'type' = 'setting',
+    );
   }
 }
 
@@ -610,9 +613,6 @@ function logintoboggan_init() {
 
   // Make sure any user with pre-auth role doesn't have authenticated user role
   _logintoboggan_user_roles_alter($user);
-
-  // Add custom css.
-  drupal_add_css(drupal_get_path('module', 'logintoboggan') .'/logintoboggan.css');
 }
 
 /**
@@ -785,7 +785,7 @@ function logintoboggan_block_info() {
 
 function _logintoboggan_toggleboggan ($form) {
 
-  drupal_add_js(drupal_get_path('module', 'logintoboggan') .'/logintoboggan.js');
+  $form['#attached']['js'][] = drupal_get_path('module', 'logintoboggan') .'/logintoboggan.js';
 
   $pre = '<div id="toboggan-container" class="toboggan-container">';
   $options = array(
