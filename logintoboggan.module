@@ -328,12 +328,12 @@ function logintoboggan_form_user_admin_permissions_alter(&$form, &$form_state) {
   $id = logintoboggan_validating_id();
   if ($id != DRUPAL_AUTHENTICATED_RID) {
     $form['#attached']['js'][] = array(
-      'data' = array(
+      'data' => array(
         'LoginToboggan' => array(
           'preAuthID' => $id,
         ),
       ),
-      'type' = 'setting',
+      'type' => 'setting',
     );
   }
 }
