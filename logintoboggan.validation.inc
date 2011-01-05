@@ -100,7 +100,3 @@ function logintoboggan_resend_validation($account) {
   drupal_goto('user/'. $account->uid .'/edit');
 }
 
-function _logintoboggan_protocol() {
-  return ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https' : 'http');
-}
-
