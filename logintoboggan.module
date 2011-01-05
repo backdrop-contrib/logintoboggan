@@ -52,7 +52,6 @@ function logintoboggan_cron() {
 
       // Log the purged users.
       if (!empty($purged_users)) {
-        batch_process(drupal_get_destination());
         watchdog('logintoboggan', 'Purged the following unvalidated users: !purged_users', array('!purged_users' => theme('item_list', array('items' => $purged_users))));
       }
     }
