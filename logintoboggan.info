@@ -3,10 +3,7 @@
 name = "LoginToboggan"
 description = "Improves Drupal's login system."
 core = "7.x"
-
-files[] = logintoboggan.install
-files[] = logintoboggan.module
-files[] = logintoboggan.tokens.inc
+configure = admin/config/system/logintoboggan
 
 stylesheets[all][] = logintoboggan.css
 
