@@ -77,7 +77,7 @@ function logintoboggan_help($path, $arg) {
       <li>Optionally have unvalidated users purged from the system at a pre-defined interval (please read the CAVEATS section of INSTALL.txt for important information on configuring this feature!).</li>
       </ol>
       These features may be turned on or off in the Login Toboggan <a href=\"!url\">settings</a>.</p>
-      <p>Because this module completely reorients the Drupal login process you will probably want to edit the welcome e-mail on the <a href=\"!user_settings\">user settings</a> page. For instance if you have enabled the 'Set password' option, you probably should not send the user's password out in the welcome e-mail (also note when the 'Set password' option is enabled, the !login_url becomes a verification url that the user MUST visit in order to enable authenticated status). The following is an example welcome e-mail:</p>
+      <p>Because this module completely reorients the Drupal login process you will probably want to edit the welcome e-mail on the <a href=\"!user_settings\">user settings</a> page. Note when the 'Set password' option is enabled, the [user:validate-url] token becomes a verification url that the user MUST visit in order to enable authenticated status). The following is an example welcome e-mail:</p>
       ", array('!url' => url('admin/config/system/logintoboggan'), '!user_settings' => url('admin/config/people/accounts')));
       $example_help_form = drupal_get_form('logintoboggan_example_help');
       $output .= drupal_render($example_help_form);
@@ -159,6 +159,7 @@ function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
   if ($form['#user_category'] == 'account') {
     $account = $form['#user'];
     $form['#validate'][] = 'logintoboggan_user_edit_validate';
+    $id = logintoboggan_validating_id();
 
     // User is editing their own account settings, or user admin
     // is editing their account.
@@ -169,8 +170,7 @@ function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
       //   2. User is still in the validating role.
       //   3. Users can create accounts without admin approval.
       //   4. The validating role is not the authorized user role.
-      $validating_id = logintoboggan_validating_id();
-      if (!variable_get('user_email_verification', TRUE) && array_key_exists($validating_id, $account->roles) && (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_VISITORS) && ($validating_id > DRUPAL_AUTHENTICATED_RID)) {
+      if (!variable_get('user_email_verification', TRUE) && array_key_exists($id, $account->roles) && (variable_get('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) == USER_REGISTER_VISITORS) && ($id > DRUPAL_AUTHENTICATED_RID)) {
         $form['revalidate'] = array(
           '#type' => 'fieldset',
           '#title' => t('Account validation'),
@@ -182,7 +182,6 @@ function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
       }
     }
 
-    $id = logintoboggan_validating_id();
     $pre_auth = !variable_get('user_email_verification', TRUE) && $id != DRUPAL_AUTHENTICATED_RID;
     $in_pre_auth_role = in_array($id, array_keys($account->roles));
     // Messages are only necessary for user admins, and aren't necessary if
@@ -260,10 +259,10 @@ function logintoboggan_form_user_register_form_alter(&$form, &$form_state) {
       $form['account']['name']['#weight'] = -30;
       $form['account']['mail']['#weight'] = -29;
     }
-    if ($pass) {
-      $min_pass = variable_get('logintoboggan_minimum_password_length', 0);
-      $length = $min_pass ? t('between !min and', array('!min' => $min_pass)) : t('no more than');
-      $form['account']['pass']['#description'] = t('Please choose a password for your account; it must be !length 30 characters.', array('!length' => $length));
+    $min_pass = variable_get('logintoboggan_minimum_password_length', 0);
+    if ($pass && $min_pass > 0) {
+      $form['account']['pass']['#description'] = isset($form['account']['pass']['#description']) ? $form['account']['pass']['#description'] . " " : "";
+      $form['account']['pass']['#description'] .= t('Password must be at least %length characters.', array('%length' => $min_pass));
     }
   }
 }
@@ -443,11 +442,6 @@ function logintoboggan_user_register_submit($form, &$form_state) {
   // user data.
   form_state_values_clean($form_state);
 
-  // Must unset mail confirmation to prevent it from being saved in the user table's 'data' field.
-  if (isset($form_state['values']['conf_mail'])) {
-    unset($form_state['values']['conf_mail']);
-  }
-
   // Set the roles for the new user -- add the pre-auth role if they can pick their own password,
   // and the pre-auth role isn't anon or auth user.
   $validating_id = logintoboggan_validating_id();
@@ -462,7 +456,14 @@ function logintoboggan_user_register_submit($form, &$form_state) {
   $form_state['values']['status'] = $status;
 
   $account = $form['#user'];
-  $account = user_save($account, $form_state['values']);
+
+  entity_form_submit_build_entity('user', $account, $form, $form_state);
+
+  // Populate $edit with the properties of $account, which have been edited on
+  // this form by taking over all values, which appear in the form values too.
+  $edit = array_intersect_key((array) $account, $form_state['values']);
+  $account = user_save($account, $edit);
+
   // Terminate if an error occurred during user_save().
   if (!$account) {
     drupal_set_message(t("Error saving user account."), 'error');
@@ -470,6 +471,7 @@ function logintoboggan_user_register_submit($form, &$form_state) {
     return;
   }
   $form_state['user'] = $account;
+  $form_state['values']['uid'] = $account->uid;
 
   watchdog('user', 'New user: %name (%email).', array('%name' => $form_state['values']['name'], '%email' => $form_state['values']['mail']), WATCHDOG_NOTICE, l(t('edit'), 'user/' . $account->uid . '/edit'));
 
@@ -956,7 +958,7 @@ function logintoboggan_user_load($users) {
  */
 function logintoboggan_user_update(&$edit, $account, $category) {
   // Only perform this check if an admin is editing the account.
-  if (user_access('administer users')&& isset($edit['roles'])) {
+  if (user_access('administer users') && isset($edit['roles'])) {
     // Check to see if roles present, and the pre-auth role was present when
     // the form was initially displayed.
     if (isset($edit['logintoboggan_pre_auth_check'])) {
@@ -965,8 +967,8 @@ function logintoboggan_user_update(&$edit, $account, $category) {
       $validating_id = logintoboggan_validating_id();
       $pre_auth = !variable_get('user_email_verification', TRUE) && $validating_id != DRUPAL_AUTHENTICATED_RID;
       if ($pre_auth) {
-      // Check to see if an admin has manually removed the pre-auth role from
-      // the user.  If so, send the account activation email.
+        // Check to see if an admin has manually removed the pre-auth role from
+        // the user.  If so, send the account activation email.
         if (!isset($edit['roles'][$validating_id]) || !$edit['roles'][$validating_id]) {
           // Mail the user, letting them know their account now has auth user perms.
           _user_mail_notify('status_activated', $account);
