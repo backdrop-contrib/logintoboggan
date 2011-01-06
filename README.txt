@@ -25,7 +25,9 @@ module by offering the following features:
    7. Optionally redirect the user to a specific page upon validation of their
       e-mail address.
    8. Optionally display a user message indicating a successful login.
-   9. Optionally have unvalidated users purged from the system at a pre-defined
+   9. Optionally combine both the login and registration form on one page.
+  10. Optionally display a 'Request new password' link on the user login form.
+  11. Optionally have unvalidated users purged from the system at a pre-defined
       interval
       (please read the CAVEATS section of INSTALL.txt for important information
        on configuringthis feature!).

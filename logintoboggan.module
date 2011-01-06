@@ -74,6 +74,8 @@ function logintoboggan_help($path, $arg) {
       <li>Optionally redirect the user to a specific page when using the 'Immediate login' feature.</li>
       <li>Optionally redirect the user to a specific page upon validation of their e-mail address.</li>
       <li>Optionally display a user message indicating a successful login.</li>
+      <li>Optionally combine both the login and registration form on one page.</li>
+      <li>Optionally display an 'Request new password' link on the user login form.</li>
       <li>Optionally have unvalidated users purged from the system at a pre-defined interval (please read the CAVEATS section of INSTALL.txt for important information on configuring this feature!).</li>
       </ol>
       These features may be turned on or off in the Login Toboggan <a href=\"!url\">settings</a>.</p>
@@ -215,7 +217,7 @@ function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
 }
 
 /**
- * Implement hook_form_user_register_alter().
+ * Implement hook_form_user_register_form_alter().
  *
  * @ingroup logintoboggan_core
  */
@@ -375,6 +377,13 @@ function logintoboggan_form_alter(&$form, &$form_state, $form_id) {
         }
         elseif ($block_type == 2) {
           $form  = _logintoboggan_toggleboggan($form);
+        }
+      }
+      else {
+        if (variable_get('logintoboggan_unified_login', 0)) {
+          $form['lost_password'] = array(
+            '#markup' => '<div class="login-forgot">' . l(t('Request new password'), 'user/password') . '</div>',
+          );
         }
       }
       break;
@@ -681,6 +690,22 @@ function logintoboggan_menu() {
   return $items;
 }
 
+ /**
+ * Implementation of hook_menu_alter().
+ */
+function logintoboggan_menu_alter(&$callbacks) {
+  if (variable_get('logintoboggan_unified_login', 0)) {
+    // Kill the tabs on the login pages.
+    $callbacks['user/login']['type'] = MENU_NORMAL_ITEM;
+    $callbacks['user/login']['page callback'] = 'logintoboggan_unified_login_page';
+    $callbacks['user/register']['type'] = MENU_CALLBACK;
+    $callbacks['user/register']['page callback'] = 'logintoboggan_unified_login_page';
+    $callbacks['user/register']['page arguments'] = array('register');
+    $callbacks['user/password']['type'] = MENU_CALLBACK;
+    $callbacks['user']['page callback'] = 'logintoboggan_unified_login_page';
+  }
+}
+
 /**
  * Access check for user e-mail validation.
  */
@@ -693,6 +718,43 @@ function logintoboggan_validate_email_access($account, $timestamp) {
  */
 function logintoboggan_revalidate_access($account) {
   return $GLOBALS['user']->uid && ($GLOBALS['user']->uid == $account->uid || user_access('administer users'));
+}
+
+/**
+ * Menu callback for user/login
+ *   creates a unified login/registration form (without tabs)
+ */
+function logintoboggan_unified_login_page($active_form = 'login') {
+  global $user;
+  if ($user->uid) {
+    menu_set_active_item('user/' . $user->uid);
+    return menu_execute_active_handler(NULL, FALSE);
+  }
+  else {
+    $login_form = drupal_get_form('user_login');
+    $login_form['#attached']['js'][] = drupal_get_path('module', 'logintoboggan') .'/logintoboggan.unifiedlogin.js';
+    $login_form['#attached']['js'][] = array(
+      'data' => array(
+        'LoginToboggan' => array(
+          'unifiedLoginActiveForm' => $active_form,
+        ),
+      ),
+      'type' => 'setting',
+    );
+    $register_form = drupal_get_form('user_register_form');
+    $rendered_login_form = drupal_render($login_form);
+    $rendered_register_form = drupal_render($register_form);
+    $variables = array(
+      'login_form' => $rendered_login_form,
+      'register_form' => $rendered_register_form,
+      'active_form' => $active_form,
+    );
+    $output = theme('lt_unified_login_page', $variables);
+    // Title just clutters the interface...
+    drupal_set_title('');
+
+    return $output;
+  }
 }
 
 /**
@@ -725,6 +787,13 @@ function logintoboggan_theme($existing, $type, $theme, $path) {
     ),
     'lt_login_successful_message' => array(
       'variables' => array('account' => NULL),
+    ),
+    'lt_unified_login_page' => array(
+      'variables' => array(
+        'login_form' => NULL,
+        'register_form' => NULL,
+        'active_form' => NULL,
+      ),
     ),
   );
 }
@@ -1134,5 +1203,37 @@ function theme_lt_login_link($variables) {
  */
 function theme_lt_login_successful_message($variables) {
   return t('Log in successful for %name.', array('%name' => $variables['account']->name));
+}
+
+/**
+ * Theme function for unified login page.
+ *
+ * @ingroup themable
+ */
+function theme_lt_unified_login_page($variables) {
+
+  $login_form = $variables['login_form'];
+  $register_form = $variables['register_form'];
+  $active_form = $variables['active_form'];
+  $output = '';
+
+  $output .= '<div class="toboggan-unified ' . $active_form . '">';
+
+  // Create the initial message and links that people can click on.
+  $output .= '<div id="login-message">' . t('You are not logged in.') . '</div>';
+  $output .= '<div id="login-links">';
+  $output .= l(t('I have an account'), 'user/login', array('attributes' => array('class' => array('login-link'), 'id' => 'login-link')));
+  $output .= ' ';
+  $output .= l(t('I want to create an account'), 'user/register', array('attributes' => array('class' => array('login-link'), 'id' => 'register-link')));
+
+  $output .= '</div>';
+
+  // Add the login and registration forms in.
+  $output .= '<div id="login-form">' . $login_form . '</div>';
+  $output .= '<div id="register-form">' . $register_form . '</div>';
+
+  $output .= '</div>';
+
+  return $output;
 }
 

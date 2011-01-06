@@ -24,6 +24,13 @@ function logintoboggan_main_settings() {
     '#description' => t('Users will be able to enter EITHER their username OR their e-mail address to log in.'),
   );
 
+  $form['login']['logintoboggan_unified_login'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Present a unified login/registration page'),
+    '#default_value' => variable_get('logintoboggan_unified_login', 0),
+    '#description' => t("Use one page for both login and registration instead of Drupal's tabbed login/registration/password pages."),
+  );
+
   $form['registration'] = array(
     '#type' => 'fieldset',
     '#title' => t('Registration'),
@@ -192,5 +199,14 @@ function logintoboggan_main_settings_submit($form, &$form_state) {
   $site_403 = $form_state['values']['logintoboggan_site_403'] == '0' ? '' : $form_state['values']['logintoboggan_site_403'];
   variable_set('site_403', $site_403);
   unset($form_state['values']['logintoboggan_site_403']);
+
+  // If the unified login setting has been changed, we need to rebuild the
+  // menu cache.
+  if ($form['login']['logintoboggan_unified_login']['#default_value'] != $form['login']['logintoboggan_unified_login']['#value']) {
+    drupal_set_message(t('Unified login setting was changed, menus have been rebuilt.'));
+    // For some reason, a regular menu_rebuild() still leaves the old callbacks
+    // cached -- doing it in a shutdown function seems to correct that issue.
+    drupal_register_shutdown_function('menu_rebuild');
+  }
 }
 
