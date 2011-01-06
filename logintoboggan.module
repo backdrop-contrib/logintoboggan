@@ -868,19 +868,18 @@ function _logintoboggan_process_validation($account) {
         ->condition('uid', $account->uid)
         ->condition('rid', $validating_id)
         ->execute();
-      // Since we're passing $account around to the update hook, remove
-      // the pre-auth role from the roles array, and add in the auth user
-      // role.
-      $account->roles[DRUPAL_AUTHENTICATED_RID] = 'authenticated user';
-      unset($account->roles[$validating_id]);
     }
   }
+  // Reload the user object freshly, since the cached value may have stale
+  // roles, and to prepare for the possible user_save() below.
+  $account = user_load($account->uid, TRUE);
+
   // Allow other modules to react to email validation by invoking the user update hook.
   // This should only be triggered if LT's custom validation is active.
   if (!variable_get('user_email_verification', TRUE)) {
     $edit = array();
     $account->logintoboggan_email_validated = TRUE;
-    user_module_invoke('update', $edit, $account);
+    user_save($account, $edit);
   }
 }
 
