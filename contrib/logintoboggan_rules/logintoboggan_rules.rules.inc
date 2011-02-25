@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Implement hook_rules_event_info().

@@ -1,4 +1,3 @@
-; $Id$
 
 name = "LoginToboggan"
 description = "Improves Drupal's login system."

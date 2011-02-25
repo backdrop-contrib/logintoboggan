@@ -1,4 +1,3 @@
-$Id$
 
 *******************************************************
     UPGRADING.txt for logintoboggan.module for Drupal

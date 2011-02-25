@@ -1,4 +1,3 @@
-// $Id$
 
 /**
  * This is a custom implementation of user.permissions.js, which is necessary

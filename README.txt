@@ -1,4 +1,3 @@
-$Id$
 
 *******************************************************
     README.txt for logintoboggan.module for Drupal

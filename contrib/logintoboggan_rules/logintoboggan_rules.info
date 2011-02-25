@@ -1,4 +1,3 @@
-; $Id$
 
 name = "LoginToboggan Rules Integration"
 description = "Integrates LoginToboggan with Rules module"
