@@ -960,7 +960,7 @@ function _logintoboggan_process_validation($account) {
   if (!variable_get('user_email_verification', TRUE)) {
     $edit = array();
     $account->logintoboggan_email_validated = TRUE;
-    user_save($account, $edit);
+    user_module_invoke('update', $edit, $account);
   }
 }
 
