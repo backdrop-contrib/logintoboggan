@@ -2,7 +2,7 @@
 /**
  * This is a custom implementation of user.permissions.js, which is necessary
  * because LoginToboggan needs its pre-auth role to not be explicitly tied to
- * the auth role.  The change is minor -- simply exclude the pre-auth role from
+ * the auth role. The change is minor -- simply exclude the pre-auth role from
  * all the auto-checking as the anon and auth user roles are.
  */
 
