@@ -166,7 +166,7 @@ function logintoboggan_main_settings() {
     '#title' => t('Minimum password length'),
     '#options' => $min_pass_options,
     '#default_value' => variable_get('logintoboggan_minimum_password_length', 0),
-    '#description' => t('LoginToboggan automatically performs basic password validation for illegal characters. If you would additionally like to have a mimimum password length requirement, select the length here, or set to \'None\' for no password length validation.')
+    '#description' => t('LoginToboggan automatically performs basic password validation for illegal characters. If you would additionally like to have a minimum password length requirement, select the length here, or set to \'None\' for no password length validation.')
   );
 
   return system_settings_form($form);
