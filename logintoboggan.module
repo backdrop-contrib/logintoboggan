@@ -92,7 +92,7 @@ function logintoboggan_help($path, $arg) {
       else {
         $help_text = '';
       }
-      $output = t("<p>Customize your login and registration system. $help_text</p>");
+      $output = "<p>" . t("Customize your login and registration system.") . " $help_text</p>";
 
       return $output;
   }
