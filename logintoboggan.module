@@ -735,6 +735,9 @@ function logintoboggan_revalidate_access($account) {
 /**
  * Menu callback for user/login
  *   creates a unified login/registration form (without tabs)
+ *
+ * @param $active_form
+ *   Which form to display, should be 'login' or 'register'.
  */
 function logintoboggan_unified_login_page($active_form = 'login') {
   global $user;
@@ -743,28 +746,9 @@ function logintoboggan_unified_login_page($active_form = 'login') {
     return menu_execute_active_handler(NULL, FALSE);
   }
   else {
-    $login_form = drupal_get_form('user_login');
-    $login_form['#attached']['js'][] = drupal_get_path('module', 'logintoboggan') .'/logintoboggan.unifiedlogin.js';
-    $login_form['#attached']['js'][] = array(
-      'data' => array(
-        'LoginToboggan' => array(
-          'unifiedLoginActiveForm' => $active_form,
-        ),
-      ),
-      'type' => 'setting',
-    );
-    $register_form = drupal_get_form('user_register_form');
-    $rendered_login_form = drupal_render($login_form);
-    $rendered_register_form = drupal_render($register_form);
-    $variables = array(
-      'login_form' => $rendered_login_form,
-      'register_form' => $rendered_register_form,
-      'active_form' => $active_form,
-    );
-    $output = theme('lt_unified_login_page', $variables);
     // Title just clutters the interface...
     drupal_set_title('');
-
+    $output = logintoboggan_get_authentication_form($active_form);
     return $output;
   }
 }
@@ -888,11 +872,61 @@ function _logintoboggan_toggleboggan ($form) {
   return $form;
 }
 
+/**
+ * Builds a unified login form.
+ *
+ * @param $active_form
+ *   Which form to display, should be 'login' or 'register'.
+ */
+function logintoboggan_unified_login_form($active_form = 'login') {
+  $login_form = drupal_get_form('user_login');
+  $login_form['#attached']['js'][] = drupal_get_path('module', 'logintoboggan') .'/logintoboggan.unifiedlogin.js';
+  $login_form['#attached']['js'][] = array(
+    'data' => array(
+      'LoginToboggan' => array(
+        'unifiedLoginActiveForm' => $active_form,
+      ),
+    ),
+    'type' => 'setting',
+  );
+  $register_form = drupal_get_form('user_register_form');
+  $rendered_login_form = drupal_render($login_form);
+  $rendered_register_form = drupal_render($register_form);
+  $variables = array(
+    'login_form' => $rendered_login_form,
+    'register_form' => $rendered_register_form,
+    'active_form' => $active_form,
+  );
+  $output = theme('lt_unified_login_page', $variables);
+  return $output;
+}
+
+
+/**
+ * Returns an appropriate authentication form based on the configuration.
+ *
+ * @param $active_form
+ *   Which form to display, should be 'login' or 'register'.
+ */
+function logintoboggan_get_authentication_form($active_form = 'login') {
+  $output = '';
+  if (variable_get('logintoboggan_unified_login', 0)) {
+    $output = logintoboggan_unified_login_form($active_form);
+  }
+  elseif ($active_form == 'login') {
+    $output = drupal_get_form('user_login');
+  }
+  elseif ($active_form == 'register') {
+    $output = drupal_get_form('user_register_form');
+  }
+  return $output;
+}
+
 function logintoboggan_denied() {
   if ($GLOBALS['user']->uid == 0) {
-    // Output the user login form.
     drupal_set_title(t('Access Denied / User log in'));
-    $output = drupal_get_form('user_login');
+    // Output the user login form.
+    $output = logintoboggan_get_authentication_form('login');
     drupal_set_page_content($output);
     // Return page attributes, hide blocks.
     $page = element_info('page');
