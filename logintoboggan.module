@@ -1214,7 +1214,7 @@ function theme_lt_login_link($variables) {
  *   A user object representing the user being logged in.
  */
 function theme_lt_login_successful_message($variables) {
-  return t('Log in successful for %name.', array('%name' => $variables['account']->name));
+  return t('Log in successful for %name.', array('%name' => format_username($variables['account'])));
 }
 
 /**
