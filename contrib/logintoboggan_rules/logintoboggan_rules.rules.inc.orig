@@ -16,7 +16,6 @@ function logintoboggan_rules_rules_event_info() {
           'label' => t("The validated user's account"),
         ),
       ),
-      'group' => t('User'),
     ),
   );
 }

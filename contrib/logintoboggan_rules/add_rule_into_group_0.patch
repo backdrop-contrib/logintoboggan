@@ -1,0 +1,12 @@
+Index: sites/all/modules/contrib/logintoboggan/contrib/logintoboggan_rules/logintoboggan_rules.rules.inc
+===================================================================
+--- sites/all/modules/contrib/logintoboggan/contrib/logintoboggan_rules/logintoboggan_rules.rules.inc (revision )
++++ sites/all/modules/contrib/logintoboggan/contrib/logintoboggan_rules/logintoboggan_rules.rules.inc (revision )
+@@ -17,6 +17,7 @@
+           'label' => t("The validated user's account"),
+         ),
+       ),
++      'group' => t('User'),
+     ),
+   );
+ }
