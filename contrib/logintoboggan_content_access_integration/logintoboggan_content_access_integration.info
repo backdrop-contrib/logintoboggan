@@ -1,7 +1,7 @@
 
 name = "LoginToboggan Content Access Integration"
 description = "Integrates LoginToboggan with Content Access module, so that Non-validated users are handled correctly"
-core = "6.x"
+core = "7.x"
 
 dependencies[] = logintoboggan
 dependencies[] = content_access
