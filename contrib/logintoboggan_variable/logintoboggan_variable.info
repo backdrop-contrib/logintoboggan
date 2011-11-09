@@ -1,0 +1,6 @@
+name = "LoginToboggan Variable Integration"
+description = "Integrates LoginToboggan with Variable module"
+core = "7.x"
+
+dependencies[] = logintoboggan
+dependencies[] = variable
