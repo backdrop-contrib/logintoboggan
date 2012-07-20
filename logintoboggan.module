@@ -447,9 +447,8 @@ function logintoboggan_user_register_submit($form, &$form_state) {
   $pre_auth = logintoboggan_validating_id() != DRUPAL_AUTHENTICATED_RID;
 
   // If we are allowing user selected passwords then skip the auto-generate function
-  // The new user's status should default to the site settings, unless reg_passwd_set == 1
-  // (immediate login, we are going to assign a pre-auth role), and we want to allow
-  // admin approval accounts access to the site.
+  // The new user's status will be 1 (visitors can create own accounts) if reg_pass_set == 1
+  // Immediate login, we are going to assign a pre-auth role, until email validation completed
   if ($reg_pass_set) {
     $pass = $form_state['values']['pass'];
     $status = 1;
