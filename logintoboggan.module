@@ -559,6 +559,12 @@ function logintoboggan_user_login_validate($form, &$form_state) {
  * @ingroup logintoboggan_form
  */
 function logintoboggan_user_register_validate($form, &$form_state) {
+  //Check to see whether our username matches any email address currently in the system.
+  if($mail = db_query("SELECT mail FROM {users} WHERE LOWER(:name) = LOWER(mail)", array(
+  ':name' => $form_state['values']['name'],
+  ))->fetchField()) {
+    form_set_error('name', t('This e-mail has already been taken by another user.'));
+  }
   //Check to see whether our e-mail address matches the confirm address if enabled.
   if (variable_get('logintoboggan_confirm_email_at_registration', 0) && isset($form_state['values']['conf_mail'])) {
     if ($form_state['values']['mail'] != $form_state['values']['conf_mail']) {
