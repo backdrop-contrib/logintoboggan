@@ -761,8 +761,6 @@ function logintoboggan_unified_login_page($active_form = 'login') {
     return menu_execute_active_handler(NULL, FALSE);
   }
   else {
-    // Title just clutters the interface...
-    drupal_set_title('');
     $output = logintoboggan_get_authentication_form($active_form);
     return $output;
   }
