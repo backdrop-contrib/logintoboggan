@@ -744,6 +744,12 @@ function logintoboggan_revalidate_access($account) {
  *   Which form to display, should be 'login' or 'register'.
  */
 function logintoboggan_unified_login_page($active_form = 'login') {
+  // Sanitise the $active_form text as it comes direct from the url.
+  // It should only ever be 'login' or 'register', so default to 'login'.
+  if ($active_form != 'login' && $active_form != 'register') {
+    $active_form = 'login';
+  }
+
   global $user;
   if ($user->uid) {
     menu_set_active_item('user/' . $user->uid);
