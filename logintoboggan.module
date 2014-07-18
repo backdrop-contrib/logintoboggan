@@ -567,7 +567,7 @@ function logintoboggan_user_register_validate($form, &$form_state) {
   }
   //Check to see whether our e-mail address matches the confirm address if enabled.
   if (variable_get('logintoboggan_confirm_email_at_registration', 0) && isset($form_state['values']['conf_mail'])) {
-    if ($form_state['values']['mail'] != $form_state['values']['conf_mail']) {
+    if (trim($form_state['values']['mail']) != trim($form_state['values']['conf_mail'])) {
       form_set_error('conf_mail', t('Your e-mail address and confirmed e-mail address must match.'));
     }
   }
