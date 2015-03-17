@@ -1,7 +1,7 @@
 
 (function ($) {
 
-Drupal.behaviors.unifiedLogin = {
+Backdrop.behaviors.unifiedLogin = {
 
   attach: function (context) {
     // Attach behaviors to the links so that they show/hide forms appropriately.
@@ -36,7 +36,7 @@ Drupal.behaviors.unifiedLogin = {
       return false;
     });
 
-    switch(Drupal.settings.LoginToboggan.unifiedLoginActiveForm) {
+    switch(Backdrop.settings.LoginToboggan.unifiedLoginActiveForm) {
       case 'register':
         $('.toboggan-unified #register-link').click();
         break;

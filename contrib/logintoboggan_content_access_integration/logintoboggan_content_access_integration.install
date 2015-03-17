@@ -10,7 +10,7 @@
  */
 function logintoboggan_content_access_integration_enable(){
 
-  if (logintoboggan_validating_id() == DRUPAL_AUTHENTICATED_RID) {
+  if (logintoboggan_validating_id() == BACKDROP_AUTHENTICATED_ROLE) {
     return;
   }
 
@@ -25,9 +25,9 @@ function logintoboggan_content_access_integration_enable(){
       // If permissions were set for Anonymous and Authenticated but not
       // Non-authenticated, Non-Authenticated was erroneously given access, and
       // will be denied on next rebuild.
-      $roles_set = array_diff(array(DRUPAL_AUTHENTICATED_RID, DRUPAL_ANONYMOUS_RID), $roles);
+      $roles_set = array_diff(array(BACKDROP_AUTHENTICATED_ROLE, BACKDROP_ANONYMOUS_ROLE), $roles);
       if (empty($roles_set) && !in_array(logintoboggan_validating_id(), $roles)) {
-        drupal_set_message(
+        backdrop_set_message(
           t(
             'The "@content_type" content type has the "@permission" permission set for Anonymous and Authenticated roles, but not Non-Authenticated.  ' .
             'You should grant this permission to the Non-Authenticated role if all users should continue to have access.  ',
@@ -47,8 +47,8 @@ function logintoboggan_content_access_integration_enable(){
       // the Non-authenticated role would not have been added to the
       // node access records.  (Except if Anonymous is set too, where in both
       // cases the permissions should be optimized to 'all').
-      $roles_set = array_diff(array(DRUPAL_AUTHENTICATED_RID, logintoboggan_validating_id()), $roles);
-      if (empty($roles_set) && !in_array(DRUPAL_ANONYMOUS_RID, $roles)) {
+      $roles_set = array_diff(array(BACKDROP_AUTHENTICATED_ROLE, logintoboggan_validating_id()), $roles);
+      if (empty($roles_set) && !in_array(BACKDROP_ANONYMOUS_ROLE, $roles)) {
         $rebuild[] = $content_type;
       }
     }

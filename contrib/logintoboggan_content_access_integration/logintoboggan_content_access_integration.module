@@ -4,7 +4,7 @@
  * Implementation of hook_content_access_special_roles().
  */
 function logintoboggan_content_access_integration_content_access_special_roles(){
-  if (logintoboggan_validating_id() != DRUPAL_AUTHENTICATED_RID) {
+  if (logintoboggan_validating_id() != BACKDROP_AUTHENTICATED_ROLE) {
     return array(logintoboggan_validating_id());
   }
 }

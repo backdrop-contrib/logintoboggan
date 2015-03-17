@@ -1,6 +1,6 @@
 
 ********************************************************************************
-  README.txt for logintoboggan_content_access_integration.module for Drupal
+  README.txt for logintoboggan_content_access_integration.module for Backdrop
 ********************************************************************************
 Developed by Geoff Appleby (gapple - http://drupal.org/user/490940).
 

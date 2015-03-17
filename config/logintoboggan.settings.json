@@ -1,0 +1,17 @@
+{
+    "_config_name": "logintoboggan.settings",
+    "confirm_email_at_registration": 0,
+    "denied_remove_sidebars": true,
+    "immediate_login_on_register": true,
+    "login_block_message": "",
+    "login_block_type": 0,
+    "login_successful_message": 0,
+    "login_with_email": 0,
+    "minimum_password_length": 0,
+    "override_destination_parameter": true,
+    "pre_auth_role": "authenticated",
+    "purge_unvalidated_user_interval": 0,
+    "redirect_on_confirm": "",
+    "redirect_on_register": "",
+    "unified_login": false  
+}
