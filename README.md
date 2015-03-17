@@ -1,8 +1,5 @@
 # LoginToboggan
 
-Co-developed by Jeff Robbins (jjeff) and Chad Phillips (hunmonk) with several
-features added by Raven Brooks (rbrooks00).
-
 The Login Toboggan module improves the Backdrop login system in an external
 module by offering the following features:
 
@@ -92,3 +89,17 @@ Done!
 
    Also note that the feature is only enabled if the 'Set password' option is
    also enabled.
+
+## License
+
+This project is GPL v2 software. See the LICENSE.txt file in this directory for
+complete text.
+
+## Current Maintainers
+
+-   Jerome Danthinne (https://github.com/jdanthinne/)
+
+## Credits
+
+Co-developed for Drupalby Jeff Robbins (jjeff) and Chad Phillips (hunmonk)
+with several features added by Raven Brooks (rbrooks00).
