@@ -1020,11 +1020,11 @@ function logintoboggan_process_login($account, &$edit, $redirect = array()){
 
 function logintoboggan_eml_validate_url($account, $url_options){
   $timestamp = REQUEST_TIME;
-  return url("user/validate/$account->uid/$timestamp/". logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail), $url_options);
+  return url("user/validate/$account->uid/$timestamp/". logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail, $account->uid), $url_options);
 }
 
-function logintoboggan_eml_rehash($password, $timestamp, $mail) {
-  return user_pass_rehash($password, $timestamp, $mail);
+function logintoboggan_eml_rehash($password, $timestamp, $mail, $uid) {
+  return user_pass_rehash($password, $timestamp, $mail, $uid);
 }
 
 /**

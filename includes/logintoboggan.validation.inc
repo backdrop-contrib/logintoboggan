@@ -3,7 +3,7 @@
 /**
  * @file
  *  Validation functions for LoginToboggan module.
-/**
+ */
 
 /**
  * Menu callback; validate the e-mail address as a one time URL, and redirects
@@ -22,7 +22,7 @@ function logintoboggan_validate_email($account, $timestamp, $hashed_pass, $actio
   // - the user is still in the pre-auth role or didn't set
   //   their own password.
   // - the hashed password is correct.
-  if (((config_get('system.core', 'user_email_verification') && empty($account->login)) || ($pre_auth && array_key_exists($validating_id, $account->roles))) && $hashed_pass == logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail)) {
+  if (((variable_get('user_email_verification', TRUE) && empty($account->login)) || ($pre_auth && array_key_exists($validating_id, $account->roles))) && $hashed_pass == logintoboggan_eml_rehash($account->pass, $timestamp, $account->mail, $account->uid)) {
     watchdog('user', 'E-mail validation URL used for %name with timestamp @timestamp.', array('%name' => $account->name, '@timestamp' => $timestamp));
 
     _logintoboggan_process_validation($account);
