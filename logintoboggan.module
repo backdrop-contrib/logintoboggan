@@ -88,14 +88,14 @@ This will verify your account and log you into the site. In the future you will 
  *
  * @ingroup logintoboggan_core
  */
-function logintoboggan_form_block_admin_configure_alter(&$form, &$form_state) {
-  if (($form['module']['#value'] == 'user') && ($form['delta']['#value'] == 'login')) {
+function logintoboggan_form_layout_block_configure_form_alter(&$form, &$form_state) {
+  if ($form_state['block']->plugin == 'user:login') {
     $config = config('logintoboggan.settings');
     $form['#submit'][] = 'logintoboggan_user_block_admin_configure_submit';
 
-    $form['settings']['title']['#description'] .= '<div id="logintoboggan-block-title-description">'. t('<strong>Note:</strong> Logintoboggan module is installed. If you are using one of the custom login block types below, it is recommended that you set this to <em>&lt;none&gt;</em>.') .'</div>';
+    $form['title_display']['title_display']['#description'] = '<div id="logintoboggan-block-title-description">'. t('<strong>Note:</strong> Logintoboggan module is installed. If you are using one of the custom login block types below, it is recommended that you set this to <em>None</em>.') .'</div>';
 
-    $form['settings']['logintoboggan_login_block_type'] = array(
+    $form['logintoboggan_login_block_type'] = array(
       '#type' => 'radios',
       '#title' => t('Block type'),
       '#default_value' => $config->get('login_block_type'),
@@ -103,7 +103,7 @@ function logintoboggan_form_block_admin_configure_alter(&$form, &$form_state) {
       '#description' => t("'Standard' is a standard login block, 'Link' is a login link that returns the user to the original page after logging in, 'Collapsible form' is a javascript collaspible login form."),
     );
 
-    $form['settings']['logintoboggan_login_block_message'] = array(
+    $form['logintoboggan_login_block_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Set a custom message to appear at the top of the login block'),
       '#default_value' => $config->get('login_block_message'),
@@ -1261,4 +1261,3 @@ function theme_lt_unified_login_page($variables) {
 
   return $output;
 }
-
