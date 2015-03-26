@@ -117,61 +117,58 @@ function logintoboggan_form_layout_block_configure_form_alter(&$form, &$form_sta
  * @ingroup logintoboggan_core
  */
 function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
+  $account = $form['#user'];
+  $form['#validate'][] = 'logintoboggan_user_edit_validate';
+  $id = logintoboggan_validating_id();
 
-  if ($form['#user_category'] == 'account') {
-    $account = $form['#user'];
-    $form['#validate'][] = 'logintoboggan_user_edit_validate';
-    $id = logintoboggan_validating_id();
-
-    // User is editing their own account settings, or user admin
-    // is editing their account.
-    if ($GLOBALS['user']->uid == $account->uid || user_access('administer users')) {
-      // Display link to re-send validation e-mail.
-      // Re-validate link appears if:
-      //   1. Users can create their own password.
-      //   2. User is still in the validating role.
-      //   3. Users can create accounts without admin approval.
-      //   4. The validating role is not the authorized user role.
-      if (!config_get('system.core', 'user_email_verification') && array_key_exists($id, $account->roles) && (config_get('system.core', 'user_register') == USER_REGISTER_VISITORS) && ($id > BACKDROP_AUTHENTICATED_ROLE)) {
-        $form['revalidate'] = array(
-          '#type' => 'fieldset',
-          '#title' => t('Account validation'),
-          '#weight' => -10,
-        );
-        $form['revalidate']['revalidate_link'] = array(
-          '#markup' => l(t('re-send validation e-mail'), 'toboggan/revalidate/'. $account->uid),
-        );
-      }
+  // User is editing their own account settings, or user admin
+  // is editing their account.
+  if ($GLOBALS['user']->uid == $account->uid || user_access('administer users')) {
+    // Display link to re-send validation e-mail.
+    // Re-validate link appears if:
+    //   1. Users can create their own password.
+    //   2. User is still in the validating role.
+    //   3. Users can create accounts without admin approval.
+    //   4. The validating role is not the authorized user role.
+    if (!config_get('system.core', 'user_email_verification') && in_array($id, $account->roles) && (config_get('system.core', 'user_register') == USER_REGISTER_VISITORS) && ($id != BACKDROP_AUTHENTICATED_ROLE)) {
+      $form['revalidate'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Account validation'),
+        '#weight' => -10,
+      );
+      $form['revalidate']['revalidate_link'] = array(
+        '#markup' => l(t('re-send validation e-mail'), 'toboggan/revalidate/'. $account->uid),
+      );
     }
+  }
 
-    $pre_auth = !config_get('system.core', 'user_email_verification') && $id != BACKDROP_AUTHENTICATED_ROLE;
-    $in_pre_auth_role = in_array($id, array_keys($account->roles));
-    // Messages are only necessary for user admins, and aren't necessary if
-    // there's no valid pre-auth role.
-    if (user_access('administer users') && isset($form['account']['roles']) && $pre_auth) {
-      // User is still in the pre-auth role, so let the admin know.
-      if ($in_pre_auth_role) {
-        // To reduce UI confusion, remove the disabled checkbox for the
-        // authenticated user role.
-        unset($form['account']['roles'][BACKDROP_AUTHENTICATED_ROLE]);
+  $pre_auth = !config_get('system.core', 'user_email_verification') && $id != BACKDROP_AUTHENTICATED_ROLE;
+  $in_pre_auth_role = in_array($id, array_keys($account->roles));
+  // Messages are only necessary for user admins, and aren't necessary if
+  // there's no valid pre-auth role.
+  if (user_access('administer users') && isset($form['account']['roles']) && $pre_auth) {
+    // User is still in the pre-auth role, so let the admin know.
+    if ($in_pre_auth_role) {
+      // To reduce UI confusion, remove the disabled checkbox for the
+      // authenticated user role.
+      unset($form['account']['roles']['#options'][BACKDROP_AUTHENTICATED_ROLE]);
 
-        // This form element is necessary as a placeholder for the user's
-        // pre-auth setting on form load. It's used to compare against the
-        // submitted form values to see if the pre-auth role has been unchecked.
-        $form['logintoboggan_pre_auth_check'] = array(
-          '#type' => 'hidden',
-          '#value' => '1',
-        );
-        if (config_get('system.core', 'user_register') == USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) {
-          $form['account']['status']['#description'] = t('If this user was created using the "Immediate Login" feature of LoginToboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site\'s pre-authorized role in the "Roles" section below, or they will not receive authenticated user permissions!');
-        }
-        $form['account']['roles']['#description'] = t("The user is assigned LoginToboggan's pre-authorized role, and is not currently receiving authenticated user permissions.");
+      // This form element is necessary as a placeholder for the user's
+      // pre-auth setting on form load. It's used to compare against the
+      // submitted form values to see if the pre-auth role has been unchecked.
+      $form['logintoboggan_pre_auth_check'] = array(
+        '#type' => 'hidden',
+        '#value' => '1',
+      );
+      if (config_get('system.core', 'user_register') == USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) {
+        $form['account']['status']['#description'] = t('If this user was created using the "Immediate Login" feature of LoginToboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site\'s pre-authorized role in the "Roles" section below, or they will not receive authenticated user permissions!');
       }
-      // User is no longer in the pre-auth role, so remove the option to add
-      // them back.
-      else {
-        unset($form['account']['roles']['#options'][$id]);
-      }
+      $form['account']['roles']['#description'] = t("The user is assigned LoginToboggan's pre-authorized role, and is not currently receiving authenticated user permissions.");
+    }
+    // User is no longer in the pre-auth role, so remove the option to add
+    // them back.
+    else {
+      unset($form['account']['roles']['#options'][$id]);
     }
   }
 }
