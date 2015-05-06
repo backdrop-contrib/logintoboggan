@@ -1,6 +1,6 @@
 name = "LoginToboggan Rules Integration"
 description = "Integrates LoginToboggan with Rules module"
 backdrop = 1.x
-
+type = module
 dependencies[] = logintoboggan
 dependencies[] = rules

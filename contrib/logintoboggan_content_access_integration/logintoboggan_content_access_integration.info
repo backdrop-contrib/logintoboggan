@@ -1,6 +1,6 @@
 name = "LoginToboggan Content Access Integration"
 description = "Integrates LoginToboggan with Content Access module, so that Non-validated users are handled correctly"
 backdrop = 1.x
-
+type = module
 dependencies[] = logintoboggan
 dependencies[] = content_access

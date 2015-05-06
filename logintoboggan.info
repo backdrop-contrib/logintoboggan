@@ -2,5 +2,5 @@ name = "LoginToboggan"
 description = "Improves Backdrop's login system."
 backdrop = 1.x
 configure = admin/config/people/logintoboggan
-
+type = module
 stylesheets[all][] = css/logintoboggan.css

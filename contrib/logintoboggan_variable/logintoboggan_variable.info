@@ -1,6 +1,6 @@
 name = "LoginToboggan Variable Integration"
 description = "Integrates LoginToboggan with Variable module"
 backdrop = 1.x
-
+type = module
 dependencies[] = logintoboggan
 dependencies[] = variable
