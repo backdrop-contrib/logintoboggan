@@ -3,4 +3,5 @@ description = "Improves Backdrop's login system."
 backdrop = 1.x
 configure = admin/config/people/logintoboggan
 type = module
+version = 1.x-1.0.2
 stylesheets[all][] = css/logintoboggan.css
