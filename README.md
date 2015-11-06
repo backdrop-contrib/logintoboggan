@@ -101,5 +101,5 @@ complete text.
 
 ## Credits
 
-Co-developed for Drupalby Jeff Robbins (jjeff) and Chad Phillips (hunmonk)
+Co-developed for Drupal by Jeff Robbins (jjeff) and Chad Phillips (hunmonk)
 with several features added by Raven Brooks (rbrooks00).
