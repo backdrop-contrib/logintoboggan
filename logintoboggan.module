@@ -143,32 +143,30 @@ function logintoboggan_form_user_profile_form_alter(&$form, &$form_state) {
   }
 
   $pre_auth = !config_get('system.core', 'user_email_verification') && $id != BACKDROP_AUTHENTICATED_ROLE;
-  $in_pre_auth_role = in_array($id, array_keys($account->roles));
+  $in_pre_auth_role = in_array($id, $account->roles);
   // Messages are only necessary for user admins, and aren't necessary if
   // there's no valid pre-auth role.
-  if (user_access('administer users') && isset($form['account']['roles']) && $pre_auth) {
+  if (user_access('administer users') && isset($form['account_settings']['roles']) && $pre_auth) {
     // User is still in the pre-auth role, so let the admin know.
     if ($in_pre_auth_role) {
       // To reduce UI confusion, remove the disabled checkbox for the
       // authenticated user role.
-      unset($form['account']['roles']['#options'][BACKDROP_AUTHENTICATED_ROLE]);
+      unset($form['account_settings']['roles']['#options'][BACKDROP_AUTHENTICATED_ROLE]);
 
-      // This form element is necessary as a placeholder for the user's
+      // This temporary property is necessary as a placeholder for the user's
       // pre-auth setting on form load. It's used to compare against the
       // submitted form values to see if the pre-auth role has been unchecked.
-      $form['logintoboggan_pre_auth_check'] = array(
-        '#type' => 'hidden',
-        '#value' => '1',
-      );
+      $account->logintoboggan_pre_auth_check = TRUE;
+
       if (config_get('system.core', 'user_register') == USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL) {
-        $form['account']['status']['#description'] = t('If this user was created using the "Immediate Login" feature of LoginToboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site\'s pre-authorized role in the "Roles" section below, or they will not receive authenticated user permissions!');
+        $form['account_settings']['status']['#description'] = t('If this user was created using the "Immediate Login" feature of LoginToboggan, and they are also awaiting adminstrator approval on their account, you must remove them from the site\'s pre-authorized role in the "Roles" section below, or they will not receive authenticated user permissions!');
       }
-      $form['account']['roles']['#description'] = t("The user is assigned LoginToboggan's pre-authorized role, and is not currently receiving authenticated user permissions.");
+      $form['account_settings']['roles']['#description'] = t("The user is assigned LoginToboggan's pre-authorized role, and is not currently receiving authenticated user permissions.");
     }
     // User is no longer in the pre-auth role, so remove the option to add
     // them back.
     else {
-      unset($form['account']['roles']['#options'][$id]);
+      unset($form['account_settings']['roles']['#options'][$id]);
     }
   }
 }
@@ -254,7 +252,7 @@ function logintoboggan_form_user_pass_reset_alter(&$form, &$form_state) {
   if (arg(5) != 'login' && ($uid = (int) arg(2))) {
     if ($account = user_load($uid)) {
       $id = logintoboggan_validating_id();
-      $in_pre_auth_role = in_array($id, array_keys($account->roles));
+      $in_pre_auth_role = in_array($id, $account->roles);
       if ($in_pre_auth_role) {
         _logintoboggan_process_validation($account);
         backdrop_set_message(t('You have successfully validated your e-mail address.'));
@@ -610,10 +608,11 @@ function logintoboggan_boot() {
  */
 function _logintoboggan_user_roles_alter($account) {
   $id = logintoboggan_validating_id();
-  $in_pre_auth_role = in_array($id, array_keys($account->roles));
+  $in_pre_auth_role = in_array($id, $account->roles);
   if ($account->uid && $in_pre_auth_role) {
     if ($id != BACKDROP_AUTHENTICATED_ROLE) {
-      unset($account->roles[BACKDROP_AUTHENTICATED_ROLE]);
+      $authenticated_role_key = array_search(BACKDROP_AUTHENTICATED_ROLE, $account->roles);
+      unset($account->roles[$authenticated_role_key]);
       // Reset the permissions cache.
       backdrop_static_reset('user_access');
     }
@@ -1046,12 +1045,12 @@ function logintoboggan_user_load($users) {
 /**
  * Implement hook_user_update().
  */
-function logintoboggan_user_update(&$edit, $account, $category) {
+function logintoboggan_user_update($account) {
   // Only perform this check if an admin is editing the account.
-  if (user_access('administer users') && isset($edit['roles'])) {
+  if (user_access('administer users') && isset($account->roles)) {
     // Check to see if roles present, and the pre-auth role was present when
     // the form was initially displayed.
-    if (isset($edit['logintoboggan_pre_auth_check'])) {
+    if (isset($account->logintoboggan_pre_auth_check)) {
       // If the pre-auth is set to the auth user, then no further checking is
       // necessary.
       $validating_id = logintoboggan_validating_id();
@@ -1059,7 +1058,7 @@ function logintoboggan_user_update(&$edit, $account, $category) {
       if ($pre_auth) {
         // Check to see if an admin has manually removed the pre-auth role from
         // the user. If so, send the account activation email.
-        if (!isset($edit['roles'][$validating_id]) || !$edit['roles'][$validating_id]) {
+        if (!in_array($validating_id, $account->roles)) {
           // Mail the user, letting them know their account now has auth user perms.
           _user_mail_notify('status_activated', $account);
         }

@@ -14,7 +14,7 @@
  * Implement hook_user()
  *
  */
-function logintoboggan_rules_user_update(&$edit, $account) {
+function logintoboggan_rules_user_update($account) {
   if (!empty($account->logintoboggan_email_validated)) {
     rules_invoke_event('logintoboggan_validated', $account);
   }
