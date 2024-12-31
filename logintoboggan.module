@@ -376,7 +376,8 @@ function logintoboggan_js_alter(&$javascript) {
 
 /**
  * Implement hook_page_alter().
- */
+ *  @todo find an alternative way to do this for Backdrop.
+
 function logintoboggan_page_alter(&$page) {
   // Remove blocks on access denied pages.
   if (isset($page['#logintoboggan_denied'])) {
@@ -388,7 +389,7 @@ function logintoboggan_page_alter(&$page) {
     }
   }
 }
-
+*/
 
 
 
@@ -903,10 +904,12 @@ function logintoboggan_denied() {
     backdrop_set_title(t('Access Denied / User log in'));
     // Output the user login form.
     $output = logintoboggan_get_authentication_form('login');
-    backdrop_set_page_content($output);
     // Return page attributes, hide blocks.
-    $page = element_info('page');
-    $page['#logintoboggan_denied'] = TRUE;
+    return $output;
+
+    // @todo find a way to do this without page_alter().
+    //$page = element_info('page');
+    //$page['#logintoboggan_denied'] = TRUE;
   }
   else {
     backdrop_set_title(t('Access Denied'));
