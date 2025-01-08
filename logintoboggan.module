@@ -418,8 +418,7 @@ function logintoboggan_user_register_submit($form, &$form_state) {
     $status = $system_config->get('user_register') == USER_REGISTER_VISITORS;
   }
 
-  // The unset below is needed to prevent these form values from being saved as
-  // user data.
+  // Needed to prevent these form values from being saved as user data.
   form_state_values_clean($form_state);
 
   // Set the roles for the new user -- add the pre-auth role if they can pick their own password,
@@ -435,21 +434,27 @@ function logintoboggan_user_register_submit($form, &$form_state) {
   $form_state['values']['roles'] = $roles;
   $form_state['values']['status'] = $status;
 
-  $account = $form['#user'];
+  $account = $form_state['complete_form']['#user'];
 
   entity_form_submit_build_entity('user', $account, $form, $form_state);
 
   // Populate $edit with the properties of $account, which have been edited on
   // this form by taking over all values, which appear in the form values too.
   $edit = array_intersect_key((array) $account, $form_state['values']);
-  $account = user_save($account, $edit);
+  foreach ($edit as $key => $value) {
+    if (property_exists($account, $key)) {
+      $account->{$key} = $value;
+    }
+  }
+  $account->save();
 
-  // Terminate if an error occurred during user_save().
+  // Terminate if an error occurred during user->save().
   if (!$account) {
     backdrop_set_message(t("Error saving user account."), 'error');
     $form_state['redirect'] = '';
     return;
   }
+
   $form_state['user'] = $account;
   $form_state['values']['uid'] = $account->uid;
 
