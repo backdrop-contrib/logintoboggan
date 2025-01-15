@@ -1,9 +1,8 @@
 <?php
-
 /**
-* @file
-* Install, update and uninstall functions for the logintoboggan module.
-*/
+ * @file
+ * Install, update and uninstall functions for the logintoboggan module.
+ */
 
 /**
  * Implement hook_update_last_removed().
@@ -38,11 +37,21 @@ function logintoboggan_update_1000() {
   $config->set('login_with_email', update_variable_get('logintoboggan_login_with_email', 0));
   $config->set('minimum_password_length', update_variable_get('logintoboggan_minimum_password_length', 0));
   $config->set('override_destination_parameter', update_variable_get('logintoboggan_override_destination_parameter', TRUE));
-  $config->set('pre_auth_role', update_variable_get('logintoboggan_pre_auth_role', BACKDROP_AUTHENTICATED_ROLE));
   $config->set('purge_unvalidated_user_interval', update_variable_get('logintoboggan_purge_unvalidated_user_interval', 0));
   $config->set('redirect_on_confirm', update_variable_get('logintoboggan_redirect_on_confirm', ''));
   $config->set('redirect_on_register', update_variable_get('logintoboggan_redirect_on_register', ''));
   $config->set('unified_login', update_variable_get('logintoboggan_unified_login', FALSE));
+
+  $backdrop_auth_role = 'authenticated';
+  $previous_auth_role = update_variable_get('logintoboggan_pre_auth_role', $backdrop_auth_role);
+  if ($previous_auth_role == '2') {
+    // Switch to the Backdrop machine name for role with ID '2' in Drupal.
+    $config->set('pre_auth_role', $backdrop_auth_role);
+  }
+  else {
+    // Otherwise maintain the role designated by Drupal settings.
+    $config->set('pre_auth_role', $previous_auth_role);
+  }
 
   update_variable_del('logintoboggan_confirm_email_at_registration');
   update_variable_del('logintoboggan_denied_remove_sidebars');
