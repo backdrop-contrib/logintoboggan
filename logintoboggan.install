@@ -61,3 +61,18 @@ function logintoboggan_update_1000() {
 
   $config->save();
 }
+
+/*
+ * Ensure existence of new default configurations.
+ */
+function logintoboggan_update_1001() {
+  $path = backdrop_get_path('module', 'logintoboggan') . '/config';
+  $storage = new ConfigFileStorage($path);
+  $default_configs = $storage->read('logintoboggan.settings');
+  $config = config('logintoboggan.settings');
+  $config->set('default_registration_status_message', $default_configs['default_registration_status_message']);
+  $config->set('validation_email_sent_status_message', $default_configs['validation_email_sent_status_message']);
+  $config->set('approval_required_status_message', $default_configs['approval_required_status_message']);
+  $config->save();
+
+}

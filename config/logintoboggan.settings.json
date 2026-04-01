@@ -13,5 +13,8 @@
     "purge_unvalidated_user_interval": 0,
     "redirect_on_confirm": "",
     "redirect_on_register": "",
-    "unified_login": false  
+    "unified_login": false,
+    "default_registration_status_message": "Further instructions have been sent to your e-mail address.",
+    "validation_email_sent_status_message": "A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.",
+    "approval_required_status_message": "Thank you for applying for an account. Your account is currently pending approval by the site administrator. Once it has been approved, you will receive an e-mail containing further instructions."
 }

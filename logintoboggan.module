@@ -462,9 +462,9 @@ function logintoboggan_user_register_submit($form, &$form_state) {
   //   1. Users can set their own password.
   //   2. The pre-auth role isn't the auth user.
   //   3. Visitors can create their own accounts.
-  $message = t('Further instructions have been sent to your e-mail address.');
+  $message = t(config_get('logintoboggan.settings', 'default_registration_status_message'));
   if($reg_pass_set && $pre_auth && $system_config->get('user_register') == USER_REGISTER_VISITORS) {
-    $message = t('A validation e-mail has been sent to your e-mail address. You will need to follow the instructions in that message in order to gain full access to the site.');
+    $message = t(config_get('logintoboggan.settings', 'validation_email_sent_status_message'));
   }
 
   if ($system_config->get('user_register') == USER_REGISTER_VISITORS) {
@@ -477,7 +477,7 @@ function logintoboggan_user_register_submit($form, &$form_state) {
     // Create new user account, administrator approval required.
     $mailkey = 'register_pending_approval';
 
-    $message = t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />Once it has been approved, you will receive an e-mail containing further instructions.');
+    $message = t(config_get('logintoboggan.settings', 'approval_required_status_message'));
   }
 
   // Mail the user.
