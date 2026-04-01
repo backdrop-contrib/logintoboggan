@@ -98,6 +98,7 @@ complete text.
 ## Current Maintainers
 
 -   Jerome Danthinne (https://github.com/jdanthinne/)
+-   Eli Lisseck (https://github.com/elisseck)
 
 ## Credits
 
