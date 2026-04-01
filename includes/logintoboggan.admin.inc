@@ -94,6 +94,25 @@ function logintoboggan_main_settings() {
     '#description' => t("If set, the user will be logged in immediately after registering. Note this only applies if the 'Set password' option above is enabled."),
   );
 
+  $form['registration']['logintoboggan_default_registration_status_message'] = [
+    '#type' => 'textfield',
+    '#title' => t('Default Registration Status Message'),
+    '#default_value' => $config->get('default_registration_status_message'),
+    '#description' => t('Status message is displayed to the user when registration is completed, but without email validation steps configured.'),
+  ];
+  $form['registration']['logintoboggan_validation_email_sent_status_message'] = [
+    '#type' => 'textfield',
+    '#title' => t('Validation Email Sent Status Message'),
+    '#default_value' => $config->get('validation_email_sent_status_message'),
+    '#description' => t('Status message is displayed to the user when registration is completed and email validation steps are configured, but no admin approval is required.'),
+  ];
+  $form['registration']['logintoboggan_approval_required_status_message'] = [
+    '#type' => 'textfield',
+    '#title' => t('Approval Required Status Message'),
+    '#default_value' => $config->get('default_registration_status_message'),
+    '#description' => t('Status message is displayed to the user when registration is completed and admin approval steps are required.'),
+  ];
+
   $form['registration']['redirect'] = array(
     '#type' => 'fieldset',
     '#title' => t('Redirections'),
